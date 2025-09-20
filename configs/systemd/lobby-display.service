@@ -1,0 +1,18 @@
+[Unit]
+Description=Lobby Display (X11 + Chromium)
+After=lobby-app.service
+Requires=lobby-app.service
+PartOf=lobby-kiosk.target
+
+[Service]
+Type=simple
+User=lobby
+Environment=DISPLAY=:0
+ExecStart=/opt/lobby/scripts/setup-display.sh
+Restart=always
+RestartSec=5
+TimeoutStartSec=30
+KillMode=mixed
+
+[Install]
+WantedBy=lobby-kiosk.target

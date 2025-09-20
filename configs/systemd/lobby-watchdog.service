@@ -1,0 +1,15 @@
+[Unit]
+Description=Lobby Kiosk Watchdog
+After=lobby-display.service
+PartOf=lobby-kiosk.target
+
+[Service]
+Type=simple
+User=lobby
+ExecStart=/opt/lobby/scripts/watchdog.sh
+Restart=always
+RestartSec=30
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=lobby-kiosk.target

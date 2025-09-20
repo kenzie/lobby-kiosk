@@ -1,0 +1,193 @@
+#!/bin/bash
+set -euo pipefail
+
+# Lobby Kiosk Management Command - Rapid MVP
+KIOSK_DIR="/opt/lobby"
+KIOSK_USER="lobby"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log() { echo -e "${GREEN}[$(date +'%H:%M:%S')] $1${NC}"; }
+error() { echo -e "${RED}[$(date +'%H:%M:%S')] ERROR: $1${NC}"; }
+
+show_help() {
+    echo "Lobby Kiosk Management CLI"
+    echo "Usage: lobby [command]"
+    echo
+    echo "Commands:"
+    echo "  status      Show system status"
+    echo "  logs        Show recent logs"
+    echo "  restart     Restart services (requires sudo)"
+    echo "  update      Update application"
+    echo "  monitor     Real-time monitoring"
+    echo "  fix         Auto-fix issues (requires sudo)"
+    echo "  help        Show this help"
+}
+
+check_sudo() {
+    if [[ $EUID -ne 0 ]] && [[ "$1" =~ ^(restart|fix)$ ]]; then
+        error "Command '$1' requires sudo"
+        exit 1
+    fi
+}
+
+cmd_status() {
+    echo -e "${BLUE}=== Lobby Kiosk Status ===${NC}"
+    echo
+    
+    # System info
+    echo -e "${BLUE}System:${NC}"
+    echo "Hostname: $(hostname)"
+    echo "Uptime: $(uptime -p)"
+    if [[ -f "$KIOSK_DIR/config/version" ]]; then
+        echo "Version: $(cat $KIOSK_DIR/config/version)"
+    fi
+    echo
+    
+    # Services
+    echo -e "${BLUE}Services:${NC}"
+    for service in lobby-kiosk.target lobby-app.service lobby-display.service lobby-watchdog.service; do
+        local status=$(systemctl is-active "$service" 2>/dev/null || echo "inactive")
+        local color="${RED}"
+        [[ "$status" == "active" ]] && color="${GREEN}"
+        echo -e "$service: ${color}$status${NC}"
+    done
+    echo
+    
+    # Application
+    echo -e "${BLUE}Application:${NC}"
+    if curl -f -s --max-time 5 http://localhost:8080/health >/dev/null 2>&1; then
+        echo -e "Vue App: ${GREEN}HEALTHY${NC}"
+    else
+        echo -e "Vue App: ${RED}UNHEALTHY${NC}"
+    fi
+    
+    if [[ -L "$KIOSK_DIR/app/current" ]]; then
+        echo "Deployment: $(basename $(readlink $KIOSK_DIR/app/current))"
+    fi
+    echo
+    
+    # Display
+    echo -e "${BLUE}Display:${NC}"
+    if pgrep -f chromium >/dev/null && xset -display :0 q >/dev/null 2>&1; then
+        echo -e "Display: ${GREEN}ACTIVE${NC}"
+    else
+        echo -e "Display: ${RED}INACTIVE${NC}"
+    fi
+    
+    # Resources
+    echo -e "${BLUE}Resources:${NC}"
+    echo "Memory: $(free -h | grep Mem | awk '{print $3 "/" $2}')"
+    echo "Disk: $(df -h $KIOSK_DIR | tail -1 | awk '{print $3 "/" $2 " (" $5 ")"}')"
+}
+
+cmd_logs() {
+    echo -e "${BLUE}=== Recent Logs ===${NC}"
+    echo
+    journalctl -u lobby-kiosk.target -n 20 --no-pager
+}
+
+cmd_restart() {
+    log "Restarting kiosk services..."
+    systemctl restart lobby-kiosk.target
+    sleep 5
+    if systemctl is-active lobby-kiosk.target >/dev/null; then
+        log "Services restarted successfully"
+    else
+        error "Service restart failed"
+        exit 1
+    fi
+}
+
+cmd_update() {
+    log "Updating application..."
+    if [[ -x "$KIOSK_DIR/scripts/build-app.sh" ]]; then
+        sudo -u "$KIOSK_USER" "$KIOSK_DIR/scripts/build-app.sh"
+        log "Application updated"
+    else
+        error "Update script not found"
+        exit 1
+    fi
+}
+
+cmd_monitor() {
+    echo -e "${BLUE}=== Real-time Monitor (Ctrl+C to exit) ===${NC}"
+    while true; do
+        clear
+        echo -e "${BLUE}Lobby Kiosk Monitor - $(date)${NC}"
+        echo
+        
+        # Quick status
+        if curl -f -s --max-time 2 http://localhost:8080/health >/dev/null 2>&1; then
+            echo -e "App: ${GREEN}HEALTHY${NC}"
+        else
+            echo -e "App: ${RED}UNHEALTHY${NC}"
+        fi
+        
+        if pgrep -f chromium >/dev/null && xset -display :0 q >/dev/null 2>&1; then
+            echo -e "Display: ${GREEN}ACTIVE${NC}"
+        else
+            echo -e "Display: ${RED}INACTIVE${NC}"
+        fi
+        
+        echo
+        echo "CPU: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}')"
+        echo "Memory: $(free | grep Mem | awk '{printf "%.1f%%", $3/$2 * 100.0}')"
+        
+        sleep 5
+    done
+}
+
+cmd_fix() {
+    log "Running automatic fixes..."
+    local fixed=0
+    
+    # Restart failed services
+    local failed=$(systemctl list-units --state=failed | grep lobby- | awk '{print $1}')
+    if [[ -n "$failed" ]]; then
+        echo "$failed" | xargs systemctl restart
+        fixed=$((fixed + 1))
+    fi
+    
+    # Clear X lock files
+    if [[ -f /tmp/.X0-lock ]]; then
+        rm -f /tmp/.X0-lock /tmp/.X11-unix/X0
+        fixed=$((fixed + 1))
+    fi
+    
+    # Restart unhealthy app
+    if ! curl -f -s --max-time 5 http://localhost:8080/health >/dev/null 2>&1; then
+        systemctl restart lobby-app.service lobby-display.service
+        fixed=$((fixed + 1))
+    fi
+    
+    if [[ $fixed -gt 0 ]]; then
+        log "Applied $fixed fixes"
+        sleep 5
+        cmd_status
+    else
+        log "No issues found"
+    fi
+}
+
+main() {
+    local command="${1:-help}"
+    
+    case "$command" in
+        "status") cmd_status ;;
+        "logs") cmd_logs ;;
+        "restart") check_sudo "$command"; cmd_restart ;;
+        "update") cmd_update ;;
+        "monitor") cmd_monitor ;;
+        "fix") check_sudo "$command"; cmd_fix ;;
+        "help"|"--help"|"-h") show_help ;;
+        *) error "Unknown command: $command"; show_help; exit 1 ;;
+    esac
+}
+
+main "$@"
