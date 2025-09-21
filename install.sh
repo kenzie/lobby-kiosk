@@ -230,14 +230,12 @@ configure_kiosk_system() {
     arch-chroot /mnt mkdir -p /opt/lobby/app/{releases,shared}
     arch-chroot /mnt chown -R lobby:lobby /opt/lobby
     
-    # Download configuration files using git (from outside chroot, then copy in)
-    log "Downloading config files outside chroot..."
-    cd /tmp
-    rm -rf lobby-kiosk-config-chroot
-    git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config-chroot
-    
-    # Copy config files into chroot
-    cp -r lobby-kiosk-config-chroot /mnt/tmp/lobby-kiosk-config
+    # Copy already downloaded config files into chroot
+    log "Copying config files into chroot..."
+    if [[ ! -d "/tmp/lobby-kiosk-config" ]]; then
+        error "Config files not found at /tmp/lobby-kiosk-config - base system setup may have failed"
+    fi
+    cp -r /tmp/lobby-kiosk-config /mnt/tmp/lobby-kiosk-config
     
     # Install systemd services with explicit file names
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target /etc/systemd/system/
@@ -261,7 +259,6 @@ configure_kiosk_system() {
     
     # Cleanup
     arch-chroot /mnt rm -rf /tmp/lobby-kiosk-config
-    rm -rf /tmp/lobby-kiosk-config-chroot
     
     # Set permissions
     arch-chroot /mnt chmod +x /opt/lobby/scripts/build-app.sh /opt/lobby/scripts/chromium-kiosk.sh /opt/lobby/scripts/setup-display.sh /opt/lobby/scripts/watchdog.sh /usr/local/bin/lobby
