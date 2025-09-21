@@ -230,9 +230,14 @@ configure_kiosk_system() {
     arch-chroot /mnt mkdir -p /opt/lobby/app/{releases,shared}
     arch-chroot /mnt chown -R lobby:lobby /opt/lobby
     
-    # Download configuration files using git
-    arch-chroot /mnt bash -c "cd /tmp && rm -rf lobby-kiosk-config"
-    arch-chroot /mnt git clone https://github.com/kenzie/lobby-kiosk.git /tmp/lobby-kiosk-config
+    # Download configuration files using git (from outside chroot, then copy in)
+    log "Downloading config files outside chroot..."
+    cd /tmp
+    rm -rf lobby-kiosk-config-chroot
+    git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config-chroot
+    
+    # Copy config files into chroot
+    cp -r lobby-kiosk-config-chroot /mnt/tmp/lobby-kiosk-config
     
     # Install systemd services with explicit file names
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target /etc/systemd/system/
@@ -247,15 +252,19 @@ configure_kiosk_system() {
     arch-chroot /mnt mkdir -p /etc/fonts
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/fonts/local.conf /etc/fonts/
     
-    # Install scripts
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/*.sh /opt/lobby/scripts/
+    # Install scripts with explicit file names
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/build-app.sh /opt/lobby/scripts/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/chromium-kiosk.sh /opt/lobby/scripts/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/setup-display.sh /opt/lobby/scripts/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/watchdog.sh /opt/lobby/scripts/
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/bin/lobby /usr/local/bin/
     
     # Cleanup
     arch-chroot /mnt rm -rf /tmp/lobby-kiosk-config
+    rm -rf /tmp/lobby-kiosk-config-chroot
     
     # Set permissions
-    arch-chroot /mnt chmod +x /opt/lobby/scripts/*.sh /usr/local/bin/lobby
+    arch-chroot /mnt chmod +x /opt/lobby/scripts/build-app.sh /opt/lobby/scripts/chromium-kiosk.sh /opt/lobby/scripts/setup-display.sh /opt/lobby/scripts/watchdog.sh /usr/local/bin/lobby
     arch-chroot /mnt chown -R lobby:lobby /opt/lobby/scripts
     
     # Configure autologin
