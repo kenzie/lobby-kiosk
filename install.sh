@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Lobby Kiosk Complete System Installer
 # Usage from Arch Linux ISO: curl -sSL https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/install.sh | bash
+# This installer ONLY works from Arch Linux live USB/ISO
 
 KIOSK_USER="lobby"
 KIOSK_DIR="/opt/lobby"
@@ -23,13 +24,17 @@ log() { echo -e "${GREEN}[$(date +'%H:%M:%S')] $1${NC}"; }
 error() { echo -e "${RED}[$(date +'%H:%M:%S')] ERROR: $1${NC}"; exit 1; }
 warn() { echo -e "${YELLOW}[$(date +'%H:%M:%S')] WARNING: $1${NC}"; }
 
-# Check if running from live ISO
-if [[ -f /etc/arch-release ]] && [[ ! -d /mnt/etc ]]; then
-    # Running on installed system - application install mode
-    INSTALL_MODE="app"
-else
-    # Running from ISO - full system install mode
-    INSTALL_MODE="system"
+# Always run in system install mode (designed for Arch ISO USB only)
+INSTALL_MODE="system"
+
+# Verify we're on live ISO
+if [[ ! -f /etc/arch-release ]]; then
+    error "This installer requires Arch Linux"
+fi
+
+if [[ -d /mnt/etc ]]; then
+    warn "Found existing /mnt/etc - unmounting previous attempts"
+    umount -R /mnt 2>/dev/null || true
 fi
 
 log "Starting lobby-kiosk installer in $INSTALL_MODE mode..."
