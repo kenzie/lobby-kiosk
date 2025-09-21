@@ -214,6 +214,12 @@ CHROOT_USER
     fi
 }
 
+# Install git if not available
+if ! command -v git &> /dev/null; then
+    log "Installing git..."
+    pacman -Sy --noconfirm git
+fi
+
 # Download configuration files using git
 log "Downloading configuration files via git..."
 cd /tmp
@@ -291,6 +297,11 @@ KIOSK_DIR="/opt/lobby"
 mkdir -p "$KIOSK_DIR"/{app,config,logs,scripts,backups}
 mkdir -p "$KIOSK_DIR/app"/{releases,shared}
 chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR"
+
+# Install git if not available
+if ! command -v git &> /dev/null; then
+    pacman -Sy --noconfirm git
+fi
 
 # Download configuration files using git
 cd /tmp
@@ -370,6 +381,12 @@ KIOSK_SCRIPT
 
 # Install configuration files using git
 install_configs() {
+    # Install git if not available
+    if ! command -v git &> /dev/null; then
+        log "Installing git..."
+        pacman -Sy --noconfirm git
+    fi
+    
     log "Downloading configuration files via git..."
     cd /tmp
     rm -rf lobby-kiosk-config
