@@ -24,13 +24,14 @@ show_help() {
     echo "  logs        Show recent logs"
     echo "  restart     Restart services (requires sudo)"
     echo "  update      Update application"
+    echo "  update-system  Update system configs (requires sudo)"
     echo "  monitor     Real-time monitoring"
     echo "  fix         Auto-fix issues (requires sudo)"
     echo "  help        Show this help"
 }
 
 check_sudo() {
-    if [[ $EUID -ne 0 ]] && [[ "$1" =~ ^(restart|fix)$ ]]; then
+    if [[ $EUID -ne 0 ]] && [[ "$1" =~ ^(restart|fix|update-system)$ ]]; then
         error "Command '$1' requires sudo"
         exit 1
     fi
@@ -175,6 +176,60 @@ cmd_fix() {
     fi
 }
 
+cmd_update_system() {
+    log "Updating system configuration..."
+    
+    # Download latest configuration files
+    cd /tmp
+    rm -rf lobby-kiosk-update
+    git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-update
+    
+    # Update systemd services
+    log "Updating systemd services..."
+    cp lobby-kiosk-update/configs/systemd/*.target /etc/systemd/system/
+    cp lobby-kiosk-update/configs/systemd/*.service /etc/systemd/system/
+    
+    # Update nginx config
+    log "Updating nginx configuration..."
+    cp lobby-kiosk-update/configs/nginx/nginx.conf /etc/nginx/
+    
+    # Update font config
+    log "Updating font configuration..."
+    mkdir -p /etc/fonts
+    cp lobby-kiosk-update/configs/fonts/local.conf /etc/fonts/
+    
+    # Update scripts
+    log "Updating management scripts..."
+    cp lobby-kiosk-update/scripts/*.sh "$KIOSK_DIR/scripts/"
+    cp lobby-kiosk-update/bin/lobby /usr/local/bin/
+    
+    # Update permissions
+    chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
+    chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/scripts"
+    
+    # Install any missing packages from package list
+    log "Installing any missing packages..."
+    PACKAGE_LIST="/tmp/lobby-kiosk-update/configs/packages.txt"
+    if [[ ! -f "$PACKAGE_LIST" ]]; then
+        error "Package list not found: $PACKAGE_LIST"
+    fi
+    
+    # Filter out comments and empty lines, then install
+    PACKAGES=$(grep -v '^#' "$PACKAGE_LIST" | grep -v '^$' | tr '\n' ' ')
+    pacman -S --needed --noconfirm $PACKAGES
+    
+    # Reload systemd and services
+    log "Reloading system services..."
+    systemctl daemon-reload
+    systemctl reload nginx
+    
+    # Cleanup
+    rm -rf lobby-kiosk-update
+    
+    log "System update complete!"
+    echo "Run 'lobby restart' to restart services with new configuration"
+}
+
 main() {
     local command="${1:-help}"
     
@@ -183,6 +238,7 @@ main() {
         "logs") cmd_logs ;;
         "restart") check_sudo "$command"; cmd_restart ;;
         "update") cmd_update ;;
+        "update-system") check_sudo "$command"; cmd_update_system ;;
         "monitor") cmd_monitor ;;
         "fix") check_sudo "$command"; cmd_fix ;;
         "help"|"--help"|"-h") show_help ;;

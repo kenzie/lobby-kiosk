@@ -1,0 +1,38 @@
+# Lobby Kiosk System Packages
+# Base system
+grub
+efibootmgr
+networkmanager
+openssh
+sudo
+
+# Development tools
+git
+curl
+wget
+nano
+vim
+
+# Web stack
+nginx
+nodejs
+npm
+
+# Browser and display
+chromium
+xorg-server
+xorg-xinit
+xorg-xset
+xorg-xrandr
+mesa
+scrot
+unclutter
+
+# System tools
+tailscale
+cronie
+
+# Fonts
+ttf-inter
+otf-cascadia-code
+fontconfig

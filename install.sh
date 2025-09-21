@@ -152,14 +152,15 @@ EOF
 # Set root password
 echo "root:'$ROOT_PASSWORD'" | chpasswd
 
-# Install essential packages
-pacman -S --noconfirm \
-    grub efibootmgr networkmanager openssh sudo \
-    git curl wget nano vim \
-    nginx nodejs npm chromium \
-    xorg-server xorg-xinit xorg-xset xorg-xrandr \
-    mesa scrot unclutter tailscale cronie \
-    ttf-inter otf-cascadia-code fontconfig
+# Install essential packages from package list
+PACKAGE_LIST="/tmp/lobby-kiosk-config/configs/packages.txt"
+if [[ ! -f "$PACKAGE_LIST" ]]; then
+    error "Package list not found: $PACKAGE_LIST"
+fi
+
+# Filter out comments and empty lines, then install
+PACKAGES=$(grep -v '^#' "$PACKAGE_LIST" | grep -v '^$' | tr '\n' ' ')
+pacman -S --noconfirm $PACKAGES
 
 # Install and configure GRUB
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
@@ -225,6 +226,12 @@ main() {
     if [[ $INSTALL_MODE == "system" ]]; then
         log "Installing complete lobby-kiosk system from scratch..."
         
+        
+        # Download config files first (needed for package list)
+        log "Downloading configuration files..."
+        cd /tmp
+        rm -rf lobby-kiosk-config
+        git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
         
         detect_disk
         setup_disk
