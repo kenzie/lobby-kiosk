@@ -39,36 +39,41 @@ fi
 
 # Prompt for root password first (before any operations)
 if [[ -z "${ROOT_PASSWORD:-}" ]]; then
-    # Check if stdin is available for interactive input
-    if [[ ! -t 0 ]]; then
-        error "No password provided and stdin not available for interactive input."
-        echo "Please run with: ROOT_PASSWORD='your-password' curl ... | bash"
-        echo "Or download the script first: curl -O ... && bash install.sh"
+    # Check if we're running interactively (downloaded script)
+    if [[ -t 0 ]]; then
+        # Interactive mode - prompt for password
+        while true; do
+            echo
+            echo "=== Root Password Setup ==="
+            echo -n "Enter root password: "
+            read -s password1
+            echo
+            echo -n "Confirm password: "
+            read -s password2
+            echo
+            
+            if [[ "$password1" == "$password2" ]]; then
+                if [[ -n "$password1" ]]; then
+                    ROOT_PASSWORD="$password1"
+                    log "Root password set successfully"
+                    break
+                else
+                    echo "Password cannot be empty. Please try again."
+                fi
+            else
+                echo "Passwords do not match. Please try again."
+            fi
+        done
+    else
+        # Piped mode - require environment variable
+        error "Root password required. Please run with:"
+        echo "ROOT_PASSWORD='your-password' curl -sSL https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/install.sh | bash"
+        echo ""
+        echo "Or download and run interactively:"
+        echo "curl -O https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/install.sh"
+        echo "bash install.sh"
         exit 1
     fi
-    
-    while true; do
-        echo
-        echo "=== Root Password Setup ==="
-        echo -n "Enter root password: "
-        read -s password1 < /dev/tty
-        echo
-        echo -n "Confirm password: "
-        read -s password2 < /dev/tty
-        echo
-        
-        if [[ "$password1" == "$password2" ]]; then
-            if [[ -n "$password1" ]]; then
-                ROOT_PASSWORD="$password1"
-                log "Root password set successfully"
-                break
-            else
-                echo "Password cannot be empty. Please try again."
-            fi
-        else
-            echo "Passwords do not match. Please try again."
-        fi
-    done
 fi
 
 log "Starting lobby-kiosk installer in $INSTALL_MODE mode..."
