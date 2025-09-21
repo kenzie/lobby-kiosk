@@ -11,7 +11,7 @@ REPO_URL="https://github.com/kenzie/lobby-display.git"
 CONFIG_REPO_URL="https://raw.githubusercontent.com/kenzie/lobby-kiosk/main"
 TARGET_DISK="/dev/sda"  # Will be auto-detected
 HOSTNAME="lobby-kiosk"
-ROOT_PASSWORD="kiosk123"  # Change this!
+ROOT_PASSWORD="${ROOT_PASSWORD:-$(openssl rand -base64 12)}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -150,7 +150,8 @@ cat > /etc/hosts << EOF
 EOF
 
 # Set root password
-echo "root:kiosk123" | chpasswd
+echo "root:\$ROOT_PASSWORD" | chpasswd
+echo "Root password set to: \$ROOT_PASSWORD" >> /var/log/install.log
 
 # Install essential packages from package list
 PACKAGE_LIST="/tmp/lobby-kiosk-config/configs/packages.txt"
@@ -233,17 +234,24 @@ main() {
         rm -rf lobby-kiosk-config
         git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
         
+        # Generate random root password if not set
+        if [[ -z "${ROOT_PASSWORD:-}" ]]; then
+            ROOT_PASSWORD=$(openssl rand -base64 12)
+            log "Generated random root password: $ROOT_PASSWORD"
+        fi
+        
         detect_disk
         setup_disk
         install_base_system
         
         # Continue installation in chroot
-        cat > /mnt/tmp/kiosk-install.sh << 'KIOSK_SCRIPT'
+        cat > /mnt/tmp/kiosk-install.sh << KIOSK_SCRIPT
 #!/bin/bash
 set -euo pipefail
 
 KIOSK_USER="lobby"
 KIOSK_DIR="/opt/lobby"
+ROOT_PASSWORD="$ROOT_PASSWORD"
 
 # Setup directories and user
 mkdir -p "$KIOSK_DIR"/{app,config,logs,scripts,backups}

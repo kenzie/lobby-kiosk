@@ -6,7 +6,7 @@ set -euo pipefail
 
 TARGET_DISK="/dev/sda"  # Will be auto-detected
 HOSTNAME="lobby-kiosk"
-ROOT_PASSWORD="kiosk123"  # Change this!
+ROOT_PASSWORD="${ROOT_PASSWORD:-$(openssl rand -base64 12)}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -141,8 +141,9 @@ cat > /etc/hosts << EOF
 127.0.1.1 lobby-kiosk.localdomain lobby-kiosk
 EOF
 
-# Set root password
-echo "root:kiosk123" | chpasswd
+# Set root password (will be expanded when heredoc is created)
+echo "root:$ROOT_PASSWORD" | chpasswd
+echo "Root password: $ROOT_PASSWORD" >> /var/log/install.log
 
 # Install minimal essential packages
 pacman -S --noconfirm \
@@ -181,6 +182,9 @@ POST_INSTALL
 # Main installation flow
 main() {
     log "Installing complete lobby-kiosk system..."
+    
+    # Show generated password
+    log "Root password will be: $ROOT_PASSWORD"
     
     detect_disk
     setup_disk
