@@ -214,21 +214,27 @@ CHROOT_USER
     fi
 }
 
-# Download and install configs
-log "Installing configuration files..."
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-kiosk.target" -o /etc/systemd/system/lobby-kiosk.target
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-app.service" -o /etc/systemd/system/lobby-app.service  
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-display.service" -o /etc/systemd/system/lobby-display.service
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-watchdog.service" -o /etc/systemd/system/lobby-watchdog.service
-curl -sSL "$CONFIG_REPO_URL/configs/nginx/nginx.conf" -o /etc/nginx/nginx.conf
+# Download configuration files using git
+log "Downloading configuration files via git..."
+cd /tmp
+rm -rf lobby-kiosk-config
+git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
 
-# Download scripts
+log "Installing configuration files..."
+# Install systemd services
+cp lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
+cp lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
+
+# Install nginx config
+cp lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
+
 log "Installing management scripts..."
-curl -sSL "$CONFIG_REPO_URL/scripts/setup-display.sh" -o "$KIOSK_DIR/scripts/setup-display.sh"
-curl -sSL "$CONFIG_REPO_URL/scripts/chromium-kiosk.sh" -o "$KIOSK_DIR/scripts/chromium-kiosk.sh"
-curl -sSL "$CONFIG_REPO_URL/scripts/build-app.sh" -o "$KIOSK_DIR/scripts/build-app.sh"
-curl -sSL "$CONFIG_REPO_URL/scripts/watchdog.sh" -o "$KIOSK_DIR/scripts/watchdog.sh"
-curl -sSL "$CONFIG_REPO_URL/bin/lobby" -o /usr/local/bin/lobby
+# Install scripts
+cp lobby-kiosk-config/scripts/*.sh "$KIOSK_DIR/scripts/"
+cp lobby-kiosk-config/bin/lobby /usr/local/bin/
+
+# Cleanup
+rm -rf lobby-kiosk-config
 
 # Make scripts executable
 chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
@@ -280,26 +286,30 @@ set -euo pipefail
 
 KIOSK_USER="lobby"
 KIOSK_DIR="/opt/lobby"
-CONFIG_REPO_URL="https://raw.githubusercontent.com/kenzie/lobby-kiosk/main"
 
 # Setup directories and user
 mkdir -p "$KIOSK_DIR"/{app,config,logs,scripts,backups}
 mkdir -p "$KIOSK_DIR/app"/{releases,shared}
 chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR"
 
-# Download configs
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-kiosk.target" -o /etc/systemd/system/lobby-kiosk.target
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-app.service" -o /etc/systemd/system/lobby-app.service
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-display.service" -o /etc/systemd/system/lobby-display.service
-curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-watchdog.service" -o /etc/systemd/system/lobby-watchdog.service
-curl -sSL "$CONFIG_REPO_URL/configs/nginx/nginx.conf" -o /etc/nginx/nginx.conf
+# Download configuration files using git
+cd /tmp
+rm -rf lobby-kiosk-config
+git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
 
-# Download scripts
-curl -sSL "$CONFIG_REPO_URL/scripts/setup-display.sh" -o "$KIOSK_DIR/scripts/setup-display.sh"
-curl -sSL "$CONFIG_REPO_URL/scripts/chromium-kiosk.sh" -o "$KIOSK_DIR/scripts/chromium-kiosk.sh"
-curl -sSL "$CONFIG_REPO_URL/scripts/build-app.sh" -o "$KIOSK_DIR/scripts/build-app.sh"
-curl -sSL "$CONFIG_REPO_URL/scripts/watchdog.sh" -o "$KIOSK_DIR/scripts/watchdog.sh"
-curl -sSL "$CONFIG_REPO_URL/bin/lobby" -o /usr/local/bin/lobby
+# Install systemd services
+cp lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
+cp lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
+
+# Install nginx config
+cp lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
+
+# Install scripts
+cp lobby-kiosk-config/scripts/*.sh "$KIOSK_DIR/scripts/"
+cp lobby-kiosk-config/bin/lobby /usr/local/bin/
+
+# Cleanup
+rm -rf lobby-kiosk-config
 
 # Set permissions
 chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
@@ -358,20 +368,28 @@ KIOSK_SCRIPT
     fi
 }
 
-# Install configuration files
+# Install configuration files using git
 install_configs() {
+    log "Downloading configuration files via git..."
+    cd /tmp
+    rm -rf lobby-kiosk-config
+    git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
+
     log "Installing configuration files..."
-    curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-kiosk.target" -o /etc/systemd/system/lobby-kiosk.target
-    curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-app.service" -o /etc/systemd/system/lobby-app.service  
-    curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-display.service" -o /etc/systemd/system/lobby-display.service
-    curl -sSL "$CONFIG_REPO_URL/configs/systemd/lobby-watchdog.service" -o /etc/systemd/system/lobby-watchdog.service
-    curl -sSL "$CONFIG_REPO_URL/configs/nginx/nginx.conf" -o /etc/nginx/nginx.conf
-    
-    curl -sSL "$CONFIG_REPO_URL/scripts/setup-display.sh" -o "$KIOSK_DIR/scripts/setup-display.sh"
-    curl -sSL "$CONFIG_REPO_URL/scripts/chromium-kiosk.sh" -o "$KIOSK_DIR/scripts/chromium-kiosk.sh"
-    curl -sSL "$CONFIG_REPO_URL/scripts/build-app.sh" -o "$KIOSK_DIR/scripts/build-app.sh"
-    curl -sSL "$CONFIG_REPO_URL/scripts/watchdog.sh" -o "$KIOSK_DIR/scripts/watchdog.sh"
-    curl -sSL "$CONFIG_REPO_URL/bin/lobby" -o /usr/local/bin/lobby
+    # Install systemd services
+    cp lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
+    cp lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
+
+    # Install nginx config
+    cp lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
+
+    log "Installing management scripts..."
+    # Install scripts
+    cp lobby-kiosk-config/scripts/*.sh "$KIOSK_DIR/scripts/"
+    cp lobby-kiosk-config/bin/lobby /usr/local/bin/
+
+    # Cleanup
+    rm -rf lobby-kiosk-config
     
     chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
     chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/scripts"
