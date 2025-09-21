@@ -158,7 +158,8 @@ pacman -S --noconfirm \
     git curl wget nano vim \
     nginx nodejs npm chromium \
     xorg-server xorg-xinit xorg-xset xorg-xrandr \
-    mesa scrot unclutter tailscale cronie
+    mesa scrot unclutter tailscale cronie \
+    ttf-inter otf-cascadia-code fontconfig
 
 # Install and configure GRUB
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
@@ -254,6 +255,10 @@ cp lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
 # Install nginx config
 cp lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
 
+# Install font config
+mkdir -p /etc/fonts
+cp lobby-kiosk-config/configs/fonts/local.conf /etc/fonts/
+
 # Install scripts
 cp lobby-kiosk-config/scripts/*.sh "$KIOSK_DIR/scripts/"
 cp lobby-kiosk-config/bin/lobby /usr/local/bin/
@@ -332,6 +337,10 @@ install_configs() {
 
     # Install nginx config
     cp lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
+
+    # Install font config
+    mkdir -p /etc/fonts
+    cp lobby-kiosk-config/configs/fonts/local.conf /etc/fonts/
 
     log "Installing management scripts..."
     # Install scripts
