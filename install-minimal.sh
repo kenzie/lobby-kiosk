@@ -31,14 +31,22 @@ fi
 
 # Prompt for root password first (before any operations)
 if [[ -z "${ROOT_PASSWORD:-}" ]]; then
+    # Check if stdin is available for interactive input
+    if [[ ! -t 0 ]]; then
+        error "No password provided and stdin not available for interactive input."
+        echo "Please run with: ROOT_PASSWORD='your-password' curl ... | bash"
+        echo "Or download the script first: curl -O ... && bash install.sh"
+        exit 1
+    fi
+    
     while true; do
         echo
         echo "=== Root Password Setup ==="
         echo -n "Enter root password: "
-        read -s password1
+        read -s password1 < /dev/tty
         echo
         echo -n "Confirm password: "
-        read -s password2
+        read -s password2 < /dev/tty
         echo
         
         if [[ "$password1" == "$password2" ]]; then
