@@ -37,13 +37,25 @@ if [[ -d /mnt/etc ]]; then
     umount -R /mnt 2>/dev/null || true
 fi
 
-# Prompt for root password first (before any operations)
+# Check if this script is being piped from curl
+if [[ ! -t 0 ]]; then
+    echo "=== Lobby Kiosk Installer ==="
+    echo "For interactive password setup, please run:"
+    echo ""
+    echo "  curl -O https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/install.sh"
+    echo "  bash install.sh"
+    echo ""
+    echo "Or set password with environment variable:"
+    echo "  ROOT_PASSWORD='your-password' curl ... | bash"
+    exit 1
+fi
+
+# Interactive password prompt
 if [[ -z "${ROOT_PASSWORD:-}" ]]; then
     while true; do
         echo
         echo "=== Root Password Setup ==="
         echo -n "Enter root password: "
-        exec < /dev/tty
         read -s password1
         echo
         echo -n "Confirm password: "
