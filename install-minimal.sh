@@ -6,7 +6,7 @@ set -euo pipefail
 
 TARGET_DISK="/dev/sda"  # Will be auto-detected
 HOSTNAME="lobby-kiosk"
-ROOT_PASSWORD="${ROOT_PASSWORD:-$(openssl rand -base64 12)}"
+ROOT_PASSWORD="${ROOT_PASSWORD:-}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -183,8 +183,18 @@ POST_INSTALL
 main() {
     log "Installing complete lobby-kiosk system..."
     
-    # Show generated password
-    log "Root password will be: $ROOT_PASSWORD"
+    # Prompt for root password if not set
+    if [[ -z "${ROOT_PASSWORD:-}" ]]; then
+        echo -n "Set root password: "
+        read -s ROOT_PASSWORD
+        echo
+        if [[ -z "$ROOT_PASSWORD" ]]; then
+            ROOT_PASSWORD=$(openssl rand -base64 12)
+            log "Using generated password: $ROOT_PASSWORD"
+        else
+            log "Using provided password"
+        fi
+    fi
     
     detect_disk
     setup_disk

@@ -11,7 +11,7 @@ REPO_URL="https://github.com/kenzie/lobby-display.git"
 CONFIG_REPO_URL="https://raw.githubusercontent.com/kenzie/lobby-kiosk/main"
 TARGET_DISK="/dev/sda"  # Will be auto-detected
 HOSTNAME="lobby-kiosk"
-ROOT_PASSWORD="${ROOT_PASSWORD:-$(openssl rand -base64 12)}"
+ROOT_PASSWORD="${ROOT_PASSWORD:-}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -234,10 +234,17 @@ main() {
         rm -rf lobby-kiosk-config
         git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
         
-        # Generate random root password if not set
+        # Prompt for root password if not set
         if [[ -z "${ROOT_PASSWORD:-}" ]]; then
-            ROOT_PASSWORD=$(openssl rand -base64 12)
-            log "Generated random root password: $ROOT_PASSWORD"
+            echo -n "Set root password: "
+            read -s ROOT_PASSWORD
+            echo
+            if [[ -z "$ROOT_PASSWORD" ]]; then
+                ROOT_PASSWORD=$(openssl rand -base64 12)
+                log "Using generated password: $ROOT_PASSWORD"
+            else
+                log "Using provided password"
+            fi
         fi
         
         detect_disk
