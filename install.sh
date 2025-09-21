@@ -140,17 +140,17 @@ locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 
 # Set hostname
-echo "'$HOSTNAME'" > /etc/hostname
+echo "lobby-kiosk" > /etc/hostname
 
 # Configure hosts file
 cat > /etc/hosts << EOF
 127.0.0.1 localhost
 ::1       localhost
-127.0.1.1 '$HOSTNAME'.localdomain '$HOSTNAME'
+127.0.1.1 lobby-kiosk.localdomain lobby-kiosk
 EOF
 
 # Set root password
-echo "root:'$ROOT_PASSWORD'" | chpasswd
+echo "root:kiosk123" | chpasswd
 
 # Install essential packages from package list
 PACKAGE_LIST="/tmp/lobby-kiosk-config/configs/packages.txt"
