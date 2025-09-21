@@ -218,62 +218,6 @@ CHROOT_USER
     fi
 }
 
-# Download configs
-log "Downloading configuration files..."
-cd /tmp
-rm -rf lobby-kiosk-config
-git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
-
-log "Installing configuration files..."
-# Install systemd services
-cp lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
-cp lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
-
-# Install nginx config
-cp lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
-
-log "Installing management scripts..."
-# Install scripts
-cp lobby-kiosk-config/scripts/*.sh "$KIOSK_DIR/scripts/"
-cp lobby-kiosk-config/bin/lobby /usr/local/bin/
-
-# Cleanup
-rm -rf lobby-kiosk-config
-
-# Make scripts executable
-chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
-chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/scripts"
-
-# Configure autologin
-mkdir -p /etc/systemd/system/getty@tty1.service.d/
-cat > /etc/systemd/system/getty@tty1.service.d/override.conf << EOF
-[Service]
-ExecStart=
-ExecStart=-/usr/bin/agetty --autologin $KIOSK_USER --noclear %I \$TERM
-EOF
-
-# Configure sudo permissions
-cat > /etc/sudoers.d/lobby << EOF
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart lobby-*.service
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/reboot
-EOF
-
-# Initial app deployment
-log "Building initial application..."
-echo "2.0.0" > "$KIOSK_DIR/config/version"
-chown "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/config/version"
-sudo -u "$KIOSK_USER" "$KIOSK_DIR/scripts/build-app.sh"
-
-# Enable services
-log "Enabling services..."
-systemctl daemon-reload
-systemctl enable lobby-kiosk.target
-systemctl enable sshd tailscaled
-
-# Boot optimization
-systemctl set-default multi-user.target
-systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true
 
 # Main installation flow
 main() {
