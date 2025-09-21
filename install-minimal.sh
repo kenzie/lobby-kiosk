@@ -29,6 +29,32 @@ if [[ -d /mnt/etc ]]; then
     umount -R /mnt 2>/dev/null || true
 fi
 
+# Prompt for root password first (before any operations)
+if [[ -z "${ROOT_PASSWORD:-}" ]]; then
+    while true; do
+        echo
+        echo "=== Root Password Setup ==="
+        echo -n "Enter root password: "
+        read -s password1
+        echo
+        echo -n "Confirm password: "
+        read -s password2
+        echo
+        
+        if [[ "$password1" == "$password2" ]]; then
+            if [[ -n "$password1" ]]; then
+                ROOT_PASSWORD="$password1"
+                log "Root password set successfully"
+                break
+            else
+                echo "Password cannot be empty. Please try again."
+            fi
+        else
+            echo "Passwords do not match. Please try again."
+        fi
+    done
+fi
+
 log "Starting lobby-kiosk minimal system installer..."
 
 # Install git for post-install
@@ -182,32 +208,6 @@ POST_INSTALL
 # Main installation flow
 main() {
     log "Installing complete lobby-kiosk system..."
-    
-    # Prompt for root password if not set
-    if [[ -z "${ROOT_PASSWORD:-}" ]]; then
-        while true; do
-            echo
-            echo "=== Root Password Setup ==="
-            echo -n "Enter root password: "
-            read -s password1
-            echo
-            echo -n "Confirm password: "
-            read -s password2
-            echo
-            
-            if [[ "$password1" == "$password2" ]]; then
-                if [[ -n "$password1" ]]; then
-                    ROOT_PASSWORD="$password1"
-                    log "Root password set successfully"
-                    break
-                else
-                    echo "Password cannot be empty. Please try again."
-                fi
-            else
-                echo "Passwords do not match. Please try again."
-            fi
-        done
-    fi
     
     detect_disk
     setup_disk
