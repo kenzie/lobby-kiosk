@@ -234,9 +234,11 @@ configure_kiosk_system() {
     arch-chroot /mnt bash -c "cd /tmp && rm -rf lobby-kiosk-config"
     arch-chroot /mnt git clone https://github.com/kenzie/lobby-kiosk.git /tmp/lobby-kiosk-config
     
-    # Install systemd services
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
+    # Install systemd services with explicit file names
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target /etc/systemd/system/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-app.service /etc/systemd/system/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-display.service /etc/systemd/system/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-watchdog.service /etc/systemd/system/
     
     # Install nginx config
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
