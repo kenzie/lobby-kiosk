@@ -33,6 +33,6 @@ tailscale
 cronie
 
 # Fonts
-ttf-inter
-otf-cascadia-code
+inter-font
+ttf-cascadia-code-nerd
 fontconfig
