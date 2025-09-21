@@ -39,6 +39,10 @@ fi
 
 log "Starting lobby-kiosk installer in $INSTALL_MODE mode..."
 
+# Install git once at the beginning
+log "Installing git..."
+pacman -Sy --noconfirm git
+
 # Auto-detect target disk
 detect_disk() {
     log "Detecting target disk..."
@@ -214,14 +218,8 @@ CHROOT_USER
     fi
 }
 
-# Install git if not available
-if ! command -v git &> /dev/null; then
-    log "Installing git..."
-    pacman -Sy --noconfirm git
-fi
-
-# Download configuration files using git
-log "Downloading configuration files via git..."
+# Download configs
+log "Downloading configuration files..."
 cd /tmp
 rm -rf lobby-kiosk-config
 git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
@@ -281,6 +279,8 @@ systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true
 main() {
     if [[ $INSTALL_MODE == "system" ]]; then
         log "Installing complete lobby-kiosk system from scratch..."
+        
+        
         detect_disk
         setup_disk
         install_base_system
@@ -297,11 +297,6 @@ KIOSK_DIR="/opt/lobby"
 mkdir -p "$KIOSK_DIR"/{app,config,logs,scripts,backups}
 mkdir -p "$KIOSK_DIR/app"/{releases,shared}
 chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR"
-
-# Install git if not available
-if ! command -v git &> /dev/null; then
-    pacman -Sy --noconfirm git
-fi
 
 # Download configuration files using git
 cd /tmp
@@ -381,12 +376,6 @@ KIOSK_SCRIPT
 
 # Install configuration files using git
 install_configs() {
-    # Install git if not available
-    if ! command -v git &> /dev/null; then
-        log "Installing git..."
-        pacman -Sy --noconfirm git
-    fi
-    
     log "Downloading configuration files via git..."
     cd /tmp
     rm -rf lobby-kiosk-config
