@@ -196,7 +196,8 @@ echo "Root password set to: \$ROOT_PASSWORD" >> /var/log/install.log
 # Install essential packages from package list
 PACKAGE_LIST="/tmp/lobby-kiosk-config/configs/packages.txt"
 if [[ ! -f "$PACKAGE_LIST" ]]; then
-    error "Package list not found: $PACKAGE_LIST"
+    echo "ERROR: Package list not found: $PACKAGE_LIST" >&2
+    exit 1
 fi
 
 # Filter out comments and empty lines, then install
