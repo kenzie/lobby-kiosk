@@ -157,7 +157,7 @@ install_base_system() {
 set -euo pipefail
 
 # Set timezone
-ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+ln -sf /usr/share/zoneinfo/America/Halifax /etc/localtime
 hwclock --systohc
 
 # Configure locale

@@ -166,55 +166,121 @@ install_base_system() {
     # Generate fstab
     genfstab -U /mnt >> /mnt/etc/fstab
     
-    # Configure system in chroot
-    arch-chroot /mnt /bin/bash << 'CHROOT_COMMANDS'
-set -euo pipefail
+    # Configure system in chroot (no heredocs!)
+    configure_chroot_system
 
-# Set timezone
-ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
-hwclock --systohc
+    log "Base system installation complete"
+}
 
-# Configure locale
-echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
-locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
-
-# Set hostname
-echo "lobby-kiosk" > /etc/hostname
-
-# Configure hosts file
-cat > /etc/hosts << EOF
+# Configure system inside chroot (no heredocs!)
+configure_chroot_system() {
+    log "Configuring system in chroot..."
+    
+    # Set timezone
+    arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/Halifax /etc/localtime
+    arch-chroot /mnt hwclock --systohc
+    
+    # Configure locale
+    arch-chroot /mnt bash -c 'echo "en_US.UTF-8 UTF-8" > /etc/locale.gen'
+    arch-chroot /mnt locale-gen
+    arch-chroot /mnt bash -c 'echo "LANG=en_US.UTF-8" > /etc/locale.conf'
+    
+    # Set hostname
+    arch-chroot /mnt bash -c 'echo "lobby-kiosk" > /etc/hostname'
+    
+    # Configure hosts file
+    arch-chroot /mnt bash -c 'cat > /etc/hosts << EOF
 127.0.0.1 localhost
 ::1       localhost
 127.0.1.1 lobby-kiosk.localdomain lobby-kiosk
-EOF
+EOF'
+    
+    # Set root password
+    arch-chroot /mnt bash -c "echo 'root:$ROOT_PASSWORD' | chpasswd"
+    arch-chroot /mnt bash -c "echo 'Root password set' >> /var/log/install.log"
+    
+    # Install packages from list
+    local package_list="/tmp/lobby-kiosk-config/configs/packages.txt"
+    if [[ ! -f "$package_list" ]]; then
+        error "Package list not found: $package_list"
+    fi
+    
+    local packages=$(grep -v '^#' "$package_list" | grep -v '^$' | tr '\n' ' ')
+    arch-chroot /mnt pacman -S --noconfirm $packages
+    
+    # Install and configure GRUB
+    arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+    arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+    
+    # Enable essential services
+    arch-chroot /mnt systemctl enable NetworkManager
+    arch-chroot /mnt systemctl enable sshd
+}
 
-# Set root password
-echo "root:\$ROOT_PASSWORD" | chpasswd
-echo "Root password set to: \$ROOT_PASSWORD" >> /var/log/install.log
-
-# Install essential packages from package list
-PACKAGE_LIST="/tmp/lobby-kiosk-config/configs/packages.txt"
-if [[ ! -f "$PACKAGE_LIST" ]]; then
-    echo "ERROR: Package list not found: $PACKAGE_LIST" >&2
-    exit 1
-fi
-
-# Filter out comments and empty lines, then install
-PACKAGES=$(grep -v '^#' "$PACKAGE_LIST" | grep -v '^$' | tr '\n' ' ')
-pacman -S --noconfirm $PACKAGES
-
-# Install and configure GRUB
-grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
-grub-mkconfig -o /boot/grub/grub.cfg
-
-# Enable essential services
-systemctl enable NetworkManager
-systemctl enable sshd
-
-CHROOT_COMMANDS
-
-    log "Base system installation complete"
+# Configure kiosk system inside chroot (no heredocs!)
+configure_kiosk_system() {
+    log "Configuring kiosk system in chroot..."
+    
+    # Create lobby user
+    arch-chroot /mnt useradd -m -s /bin/bash -G video,audio,wheel lobby
+    arch-chroot /mnt bash -c "echo 'lobby:lobby' | chpasswd"
+    
+    # Create directories
+    arch-chroot /mnt mkdir -p /opt/lobby/{app,config,logs,scripts,backups}
+    arch-chroot /mnt mkdir -p /opt/lobby/app/{releases,shared}
+    arch-chroot /mnt chown -R lobby:lobby /opt/lobby
+    
+    # Download configuration files using git
+    arch-chroot /mnt bash -c "cd /tmp && rm -rf lobby-kiosk-config"
+    arch-chroot /mnt git clone https://github.com/kenzie/lobby-kiosk.git /tmp/lobby-kiosk-config
+    
+    # Install systemd services
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
+    
+    # Install nginx config
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
+    
+    # Install font config
+    arch-chroot /mnt mkdir -p /etc/fonts
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/fonts/local.conf /etc/fonts/
+    
+    # Install scripts
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/*.sh /opt/lobby/scripts/
+    arch-chroot /mnt cp /tmp/lobby-kiosk-config/bin/lobby /usr/local/bin/
+    
+    # Cleanup
+    arch-chroot /mnt rm -rf /tmp/lobby-kiosk-config
+    
+    # Set permissions
+    arch-chroot /mnt chmod +x /opt/lobby/scripts/*.sh /usr/local/bin/lobby
+    arch-chroot /mnt chown -R lobby:lobby /opt/lobby/scripts
+    
+    # Configure autologin
+    arch-chroot /mnt mkdir -p /etc/systemd/system/getty@tty1.service.d/
+    arch-chroot /mnt bash -c 'cat > /etc/systemd/system/getty@tty1.service.d/override.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --autologin lobby --noclear %I \$TERM
+EOF'
+    
+    # Configure sudo
+    arch-chroot /mnt bash -c 'cat > /etc/sudoers.d/lobby << EOF
+lobby ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart lobby-*.service
+lobby ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx
+lobby ALL=(ALL) NOPASSWD: /usr/bin/reboot
+EOF'
+    
+    # Enable services
+    arch-chroot /mnt systemctl daemon-reload
+    arch-chroot /mnt systemctl enable lobby-kiosk.target
+    arch-chroot /mnt systemctl enable sshd tailscaled
+    arch-chroot /mnt systemctl set-default multi-user.target
+    arch-chroot /mnt bash -c "systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true"
+    
+    # Set version
+    arch-chroot /mnt bash -c 'echo "2.0.0" > /opt/lobby/config/version'
+    arch-chroot /mnt chown lobby:lobby /opt/lobby/config/version
 }
 
 # Install application packages
@@ -243,10 +309,8 @@ setup_user() {
     
     # Create user (in chroot if system install)
     if [[ $INSTALL_MODE == "system" ]]; then
-        arch-chroot /mnt /bin/bash << CHROOT_USER
-useradd -m -s /bin/bash -G video,audio,wheel "$KIOSK_USER"
-echo "$KIOSK_USER:$KIOSK_USER" | chpasswd
-CHROOT_USER
+        arch-chroot /mnt useradd -m -s /bin/bash -G video,audio,wheel "$KIOSK_USER"
+        arch-chroot /mnt bash -c "echo '$KIOSK_USER:$KIOSK_USER' | chpasswd"
     else
         id "$KIOSK_USER" >/dev/null 2>&1 || useradd -m -s /bin/bash -G video,audio "$KIOSK_USER"
     fi
@@ -281,75 +345,7 @@ main() {
         install_base_system
         
         # Continue installation in chroot
-        cat > /mnt/tmp/kiosk-install.sh << KIOSK_SCRIPT
-#!/bin/bash
-set -euo pipefail
-
-KIOSK_USER="lobby"
-KIOSK_DIR="/opt/lobby"
-ROOT_PASSWORD="$ROOT_PASSWORD"
-
-# Setup directories and user
-mkdir -p "$KIOSK_DIR"/{app,config,logs,scripts,backups}
-mkdir -p "$KIOSK_DIR/app"/{releases,shared}
-chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR"
-
-# Download configuration files using git
-cd /tmp
-rm -rf lobby-kiosk-config
-git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
-
-# Install systemd services
-cp lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
-cp lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
-
-# Install nginx config
-cp lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
-
-# Install font config
-mkdir -p /etc/fonts
-cp lobby-kiosk-config/configs/fonts/local.conf /etc/fonts/
-
-# Install scripts
-cp lobby-kiosk-config/scripts/*.sh "$KIOSK_DIR/scripts/"
-cp lobby-kiosk-config/bin/lobby /usr/local/bin/
-
-# Cleanup
-rm -rf lobby-kiosk-config
-
-# Set permissions
-chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
-chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/scripts"
-
-# Configure autologin
-mkdir -p /etc/systemd/system/getty@tty1.service.d/
-cat > /etc/systemd/system/getty@tty1.service.d/override.conf << EOF
-[Service]
-ExecStart=
-ExecStart=-/usr/bin/agetty --autologin $KIOSK_USER --noclear %I \$TERM
-EOF
-
-# Configure sudo
-cat > /etc/sudoers.d/lobby << EOF
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart lobby-*.service
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/reboot
-EOF
-
-# Enable services
-systemctl daemon-reload
-systemctl enable lobby-kiosk.target
-systemctl enable sshd tailscaled
-systemctl set-default multi-user.target
-systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true
-
-echo "2.0.0" > "$KIOSK_DIR/config/version"
-chown "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/config/version"
-
-KIOSK_SCRIPT
-
-        chmod +x /mnt/tmp/kiosk-install.sh
-        arch-chroot /mnt /tmp/kiosk-install.sh
+        configure_kiosk_system
         
         log "System installation complete!"
         echo -e "${YELLOW}Installation finished!${NC}"
