@@ -76,6 +76,7 @@ log "Starting lobby-kiosk installer in $INSTALL_MODE mode..."
 # Install git once at the beginning
 log "Installing git..."
 pacman -Sy --noconfirm git
+log "Git installation complete"
 
 # Auto-detect target disk
 detect_disk() {
@@ -258,6 +259,7 @@ CHROOT_USER
 
 # Main installation flow
 main() {
+    log "Main function started with INSTALL_MODE: $INSTALL_MODE"
     if [[ $INSTALL_MODE == "system" ]]; then
         log "Installing complete lobby-kiosk system from scratch..."
         
@@ -432,4 +434,6 @@ EOF
 }
 
 # Run main installation
+log "Calling main function..."
 main "$@"
+log "Main function completed"
