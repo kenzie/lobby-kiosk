@@ -72,7 +72,8 @@ pacstrap /mnt \
     grub efibootmgr \
     networkmanager openssh sudo \
     amd-ucode \
-    mesa xf86-video-amdgpu
+    mesa xf86-video-amdgpu \
+    inetutils
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
