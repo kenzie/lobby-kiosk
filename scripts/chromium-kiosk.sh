@@ -16,7 +16,7 @@ exec chromium \
     --no-sandbox \
     --disable-dev-shm-usage \
     --disable-gpu \
-    --disable-features=TranslateUI,VizDisplayCompositor \
+    --disable-features=TranslateUI,VizDisplayCompositor,MediaRouter \
     --disable-extensions \
     --disable-plugins \
     --disable-sync \
@@ -33,6 +33,7 @@ exec chromium \
     --disable-popup-blocking \
     --disable-prompt-on-repost \
     --disable-renderer-backgrounding \
+    --user-data-dir=/tmp/chromium-kiosk \
     --disable-web-security \
     --disable-dbus \
     --disable-d3d11 \
@@ -42,8 +43,6 @@ exec chromium \
     --disable-background-mode \
     --disable-component-update \
     --disable-domain-reliability \
-    --disable-features=MediaRouter \
-    --disable-ipc-flooding-protection \
     --disable-notifications \
     --disable-permissions-api \
     --disable-speech-api \
