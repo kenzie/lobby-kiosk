@@ -54,6 +54,16 @@ log "Updating management tools..."
 cp bin/lobby /usr/local/bin/
 chmod +x /usr/local/bin/lobby
 
+# Update sudo permissions
+log "Updating sudo permissions..."
+cat > /etc/sudoers.d/lobby << EOF
+lobby ALL=(ALL) NOPASSWD: /usr/bin/systemctl
+lobby ALL=(ALL) NOPASSWD: /usr/bin/reboot
+lobby ALL=(ALL) NOPASSWD: /usr/local/bin/lobby *
+lobby ALL=(ALL) NOPASSWD: /usr/bin/xset
+lobby ALL=(ALL) NOPASSWD: /usr/bin/pacman -S --noconfirm xdotool
+EOF
+
 # Test nginx config
 log "Testing nginx configuration..."
 nginx -t || error "Invalid nginx configuration"
