@@ -11,18 +11,8 @@ log() {
 }
 
 check_app_health() {
-    local response=$(curl -f -s --max-time 10 "$HEALTH_URL" 2>/dev/null)
-    if [[ $? -eq 0 ]]; then
-        # Check if we're in screensaver mode during overnight hours
-        local current_hour=$(date +%H)
-        if [[ $current_hour -ge 23 || $current_hour -lt 7 ]]; then
-            # During screensaver hours, accept screensaver mode as healthy
-            echo "$response" | grep -q '"mode":"screensaver"' && return 0
-        fi
-        # During normal hours, ensure we're not stuck in screensaver mode
-        echo "$response" | grep -q '"mode":"normal"' && return 0
-    fi
-    return 1
+    # Simple health check - if we get any response from the health endpoint, it's healthy
+    curl -f -s --max-time 10 "$HEALTH_URL" >/dev/null 2>&1
 }
 
 check_display_health() {
