@@ -63,6 +63,7 @@ lobby ALL=(ALL) NOPASSWD: /usr/local/bin/lobby *
 lobby ALL=(ALL) NOPASSWD: /usr/bin/xset
 lobby ALL=(ALL) NOPASSWD: /usr/bin/pacman -S --noconfirm xdotool
 EOF
+log "Sudoers updated successfully"
 
 # Test nginx config
 log "Testing nginx configuration..."
