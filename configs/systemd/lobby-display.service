@@ -1,7 +1,7 @@
 [Unit]
 Description=Lobby Display (X11 + Chromium)
-After=lobby-app.service
-Requires=lobby-app.service
+After=nginx.service
+Requires=nginx.service
 PartOf=lobby-kiosk.target
 
 [Service]

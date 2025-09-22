@@ -86,6 +86,7 @@ cp /tmp/lobby-kiosk-config/bin/lobby /usr/local/bin/
 
 # Set permissions
 chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
+chmod 644 "$KIOSK_DIR/scripts"/*.html 2>/dev/null || true
 chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/scripts"
 
 # Configure autologin (idempotent)
@@ -118,9 +119,9 @@ systemctl daemon-reload
 systemctl enable lobby-kiosk.target sshd tailscaled
 systemctl enable lobby-resource-monitor.timer 2>/dev/null || true
 systemctl enable lobby-screensaver.timer 2>/dev/null || true
-# Prevent nginx.service conflicts with lobby-app.service
-systemctl disable nginx.service 2>/dev/null || true
-systemctl mask nginx.service 2>/dev/null || true
+# Use standard nginx.service instead of custom lobby-app.service
+systemctl unmask nginx.service 2>/dev/null || true
+systemctl enable nginx.service
 systemctl start lobby-kiosk.target
 systemctl start lobby-resource-monitor.timer 2>/dev/null || true
 systemctl start lobby-screensaver.timer 2>/dev/null || true

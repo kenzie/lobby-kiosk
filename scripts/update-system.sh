@@ -58,7 +58,7 @@ nginx -t || error "Invalid nginx configuration"
 
 # Restart services
 log "Restarting services..."
-systemctl restart lobby-app.service
+systemctl restart nginx.service
 systemctl restart lobby-display.service
 
 # Wait for services to stabilize
@@ -70,8 +70,8 @@ if ! systemctl is-active --quiet lobby-display.service; then
     error "lobby-display.service failed to start"
 fi
 
-if ! systemctl is-active --quiet lobby-app.service; then
-    error "lobby-app.service failed to start"
+if ! systemctl is-active --quiet nginx.service; then
+    error "nginx.service failed to start"
 fi
 
 # Test app accessibility

@@ -53,7 +53,7 @@ cmd_status() {
     
     # Services
     echo -e "${BLUE}Services:${NC}"
-    for service in lobby-kiosk.target lobby-app.service lobby-display.service lobby-watchdog.service; do
+    for service in lobby-kiosk.target nginx.service lobby-display.service lobby-watchdog.service; do
         local status=$(systemctl is-active "$service" 2>/dev/null || echo "inactive")
         local color="${RED}"
         [[ "$status" == "active" ]] && color="${GREEN}"
