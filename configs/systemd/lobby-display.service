@@ -1,8 +1,9 @@
 [Unit]
-Description=Lobby Display (X11 + Chromium)
+Description=Lobby Display (X11 + Chromium)  
 After=nginx.service
 Requires=nginx.service
 PartOf=lobby-kiosk.target
+DefaultDependencies=no
 
 [Service]
 Type=simple
