@@ -65,7 +65,7 @@ log "Sudoers updated successfully"
 
 # Update version file  
 log "Updating version..."
-echo "1.1.0" > "$KIOSK_DIR/config/version"
+echo "1.1.1" > "$KIOSK_DIR/config/version"
 chown lobby:lobby "$KIOSK_DIR/config/version" || sudo chown lobby:lobby "$KIOSK_DIR/config/version"
 
 # Restart services
