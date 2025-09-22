@@ -249,9 +249,13 @@ configure_kiosk_system() {
     ls -la /mnt/tmp/lobby-kiosk-config/configs/systemd/ || error "systemd configs not found in chroot"
     
     # Install systemd services with explicit file names
+    log "Installing lobby-kiosk.target..."
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target /etc/systemd/system/
+    log "Installing lobby-app.service..."
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-app.service /etc/systemd/system/
+    log "Installing lobby-display.service..."
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-display.service /etc/systemd/system/
+    log "Installing lobby-watchdog.service..."
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-watchdog.service /etc/systemd/system/
     
     # Install nginx config
@@ -358,6 +362,12 @@ main() {
         cd /tmp
         rm -rf lobby-kiosk-config
         git clone https://github.com/kenzie/lobby-kiosk.git lobby-kiosk-config
+        
+        # Verify initial download worked
+        if [[ ! -f "/tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target" ]]; then
+            error "Initial config download failed - lobby-kiosk.target not found"
+        fi
+        log "Initial config download successful"
         
         detect_disk
         setup_disk
