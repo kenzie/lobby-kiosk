@@ -62,6 +62,8 @@ lobby ALL=(ALL) NOPASSWD: /usr/bin/reboot
 lobby ALL=(ALL) NOPASSWD: /usr/local/bin/lobby *
 lobby ALL=(ALL) NOPASSWD: /usr/bin/xset
 lobby ALL=(ALL) NOPASSWD: /usr/bin/pacman -S --noconfirm xdotool
+lobby ALL=(ALL) NOPASSWD: /usr/bin/tee
+lobby ALL=(ALL) NOPASSWD: /usr/bin/chown
 EOF
 log "Sudoers updated successfully"
 
