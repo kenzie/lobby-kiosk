@@ -52,14 +52,25 @@ log "Using disk: $TARGET_DISK"
 
 # Partition disk
 log "Partitioning disk..."
+
+# Ensure disk is not mounted
+umount "${TARGET_DISK}"* 2>/dev/null || true
+
+# Clear existing partitions thoroughly
 wipefs -af "$TARGET_DISK"
+dd if=/dev/zero of="$TARGET_DISK" bs=1M count=100 2>/dev/null || true
+
+# Create partition table
 parted -s "$TARGET_DISK" mklabel gpt
 parted -s "$TARGET_DISK" mkpart primary fat32 1MiB 513MiB
 parted -s "$TARGET_DISK" set 1 esp on
 parted -s "$TARGET_DISK" mkpart primary ext4 513MiB 100%
 
-sleep 2
+# Force kernel to re-read partition table
+sync
 partprobe "$TARGET_DISK"
+sleep 3
+udevadm settle
 sleep 2
 
 # Format partitions
