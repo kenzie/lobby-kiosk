@@ -34,20 +34,10 @@ echo "========================================"
 echo "This will COMPLETELY DESTROY all data on $TARGET_DISK"
 echo "Target disk: $TARGET_DISK"
 echo ""
-echo "Are you absolutely sure you want to continue? (type 'YES' to proceed)"
-
-while true; do
-    printf "Confirmation: "
-    read -r CONFIRMATION < /dev/tty
-    
-    if [[ "$CONFIRMATION" == "YES" ]]; then
-        echo "Proceeding with installation..."
-        break
-    else
-        echo "You must type exactly 'YES' to continue or press Ctrl+C to abort."
-        echo "You entered: '$CONFIRMATION'"
-    fi
-done
+# Warning
+echo "WARNING: This will DESTROY all data on $TARGET_DISK"
+echo "Press Enter to continue or Ctrl+C to abort"
+read
 
 # Unmount any existing partitions
 umount ${TARGET_DISK}* 2>/dev/null || true
