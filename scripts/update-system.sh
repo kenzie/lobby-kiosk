@@ -65,6 +65,11 @@ lobby ALL=(ALL) NOPASSWD: /usr/bin/pacman -S --noconfirm xdotool
 EOF
 log "Sudoers updated successfully"
 
+# Update version file
+log "Updating version..."
+echo "1.0.0" > "$KIOSK_DIR/config/version"
+chown lobby:lobby "$KIOSK_DIR/config/version"
+
 # Test nginx config
 log "Testing nginx configuration..."
 nginx -t || error "Invalid nginx configuration"
