@@ -3,22 +3,19 @@ set -euo pipefail
 
 # Lobby Kiosk Installer for Lenovo M75q-1
 TARGET_DISK="/dev/nvme0n1"
-ROOT_PASSWORD=""
+ROOT_PASSWORD="${ROOT_PASSWORD:-}"
 
 log() { echo "[$(date +'%H:%M:%S')] $1"; }
 error() { echo "ERROR: $1"; exit 1; }
 
 [[ ! -f /etc/arch-release ]] && error "This installer requires Arch Linux"
 
-# Get password - always prompt
-while [[ -z "$ROOT_PASSWORD" ]]; do
+# Get password
+if [[ -z "${ROOT_PASSWORD:-}" ]]; then
     echo -n "Enter root password: "
     read -s ROOT_PASSWORD
     echo
-    if [[ -z "$ROOT_PASSWORD" ]]; then
-        echo "Password cannot be empty. Please try again."
-    fi
-done
+fi
 
 log "Lobby Kiosk Installer for Lenovo M75q-1"
 log "Target disk: $TARGET_DISK"
