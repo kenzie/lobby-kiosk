@@ -38,17 +38,23 @@ fi
 log "Starting lobby-kiosk installer..."
 
 # Auto-detect largest disk
+log "Detecting target disk..."
+largest_size=0
 for disk in /dev/sd? /dev/nvme?n1 /dev/vd?; do
     if [[ -b "$disk" ]]; then
         size=$(lsblk -b -d -o SIZE "$disk" 2>/dev/null | tail -1 | tr -d ' ')
-        if [[ $size -gt ${largest_size:-0} ]]; then
+        if [[ $size -gt $largest_size ]]; then
             largest_size=$size
             TARGET_DISK="$disk"
         fi
     fi
 done
 
-log "Using disk: $TARGET_DISK"
+if [[ -z "$TARGET_DISK" || "$TARGET_DISK" == "/dev/sda" ]]; then
+    error "No suitable disk found"
+fi
+
+log "Using disk: $TARGET_DISK ($(( largest_size / 1024 / 1024 / 1024 ))GB)"
 
 # Partition disk
 log "Partitioning disk..."
