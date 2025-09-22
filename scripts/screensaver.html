@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby Screensaver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .screensaver {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .status-bar {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            transition: left 2s ease-in-out;
+        }
+        
+        .route19-logo {
+            width: 120px;
+            height: 60px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .current-time {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        .center-message {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            transition: left 2s ease-in-out;
+        }
+        
+        .islanders-logo {
+            width: 200px;
+            height: 200px;
+            background: #004d9f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .return-message {
+            font-size: 72px;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+        }
+        
+        @media (max-width: 1920px) {
+            .current-time {
+                font-size: 36px;
+            }
+            
+            .return-message {
+                font-size: 56px;
+            }
+            
+            .islanders-logo {
+                width: 150px;
+                height: 150px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="screensaver">
+        <!-- Bottom status bar with Route 19 logo and time -->
+        <div class="status-bar" id="statusBar">
+            <div class="route19-logo">Route 19</div>
+            <div class="current-time" id="currentTime"></div>
+        </div>
+
+        <!-- Center message with CBW Islanders logo -->
+        <div class="center-message" id="centerMessage">
+            <div class="islanders-logo">CBW<br>Islanders</div>
+            <div class="return-message">We will return at 7am</div>
+        </div>
+    </div>
+
+    <script>
+        let maxStatusBarOffset = 200;
+        let maxCenterOffset = 300;
+        
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        
+        function updatePositions() {
+            const statusBar = document.getElementById('statusBar');
+            const centerMessage = document.getElementById('centerMessage');
+            
+            // Smooth random movement to prevent burn-in
+            statusBar.style.left = Math.random() * maxStatusBarOffset + 'px';
+            centerMessage.style.left = Math.random() * maxCenterOffset + 'px';
+        }
+        
+        // Update time every second
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // Update positions every 30 seconds for burn-in prevention
+        setInterval(updatePositions, 30000);
+        updatePositions();
+    </script>
+</body>
+</html>

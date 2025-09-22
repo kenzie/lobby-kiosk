@@ -1,0 +1,12 @@
+[Unit]
+Description=Lobby Screensaver Auto-Scheduler
+PartOf=lobby-kiosk.target
+
+[Service]
+Type=oneshot
+User=lobby
+ExecStart=/opt/lobby/scripts/screensaver-manager.sh auto
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=lobby-kiosk.target

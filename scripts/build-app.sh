@@ -27,6 +27,8 @@ echo "Creating release build..."
 cp -r app/repo "$RELEASE_DIR"
 cd "$RELEASE_DIR"
 
+# Screensaver is now standalone HTML, no Vue integration needed
+
 # Build application
 echo "Installing dependencies..."
 npm ci --production=false

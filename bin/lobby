@@ -27,6 +27,7 @@ show_help() {
     echo "  update-system  Update system configs (requires sudo)"
     echo "  monitor     Real-time monitoring"
     echo "  fix         Auto-fix issues (requires sudo)"
+    echo "  screensaver {on|off|toggle|status}  Control screensaver"
     echo "  help        Show this help"
 }
 
@@ -185,6 +186,30 @@ cmd_update_system() {
     log "System update complete!"
 }
 
+cmd_screensaver() {
+    local action="${1:-status}"
+    
+    case "$action" in
+        "on"|"activate")
+            "$KIOSK_DIR/scripts/screensaver-manager.sh" activate
+            ;;
+        "off"|"deactivate") 
+            "$KIOSK_DIR/scripts/screensaver-manager.sh" deactivate
+            ;;
+        "toggle")
+            "$KIOSK_DIR/scripts/screensaver-manager.sh" toggle
+            ;;
+        "status")
+            "$KIOSK_DIR/scripts/screensaver-manager.sh" status
+            ;;
+        *)
+            error "Invalid screensaver action: $action"
+            echo "Usage: lobby screensaver {on|off|toggle|status}"
+            exit 1
+            ;;
+    esac
+}
+
 main() {
     local command="${1:-help}"
     
@@ -196,6 +221,7 @@ main() {
         "update-system") check_sudo "$command"; cmd_update_system ;;
         "monitor") cmd_monitor ;;
         "fix") check_sudo "$command"; cmd_fix ;;
+        "screensaver") shift; cmd_screensaver "$@" ;;
         "help"|"--help"|"-h") show_help ;;
         *) error "Unknown command: $command"; show_help; exit 1 ;;
     esac

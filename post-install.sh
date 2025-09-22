@@ -46,6 +46,9 @@ fi
 PACKAGES=$(grep -v '^#' "$PACKAGE_LIST" | grep -v '^$' | tr '\n' ' ')
 pacman -S --needed --noconfirm $PACKAGES
 
+# Install xdotool for screensaver navigation
+pacman -S --needed --noconfirm xdotool
+
 # Create lobby user if doesn't exist
 if ! id "$KIOSK_USER" &>/dev/null; then
     log "Creating lobby user..."
@@ -63,6 +66,7 @@ chown -R "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR"
 log "Installing systemd services..."
 cp /tmp/lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
 cp /tmp/lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
+cp /tmp/lobby-kiosk-config/configs/systemd/*.timer /etc/systemd/system/ 2>/dev/null || true
 
 # Install nginx config
 log "Installing nginx configuration..."
@@ -77,6 +81,8 @@ cp /tmp/lobby-kiosk-config/configs/fonts/local.conf /etc/fonts/
 log "Installing management scripts..."
 cp /tmp/lobby-kiosk-config/scripts/*.sh "$KIOSK_DIR/scripts/"
 cp /tmp/lobby-kiosk-config/bin/lobby /usr/local/bin/
+
+# Screensaver HTML is included in scripts/ directory
 
 # Set permissions
 chmod +x "$KIOSK_DIR/scripts"/*.sh /usr/local/bin/lobby
@@ -109,10 +115,14 @@ chown "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/config/version"
 log "Enabling services..."
 systemctl daemon-reload
 systemctl enable lobby-kiosk.target sshd tailscaled
+systemctl enable lobby-resource-monitor.timer 2>/dev/null || true
+systemctl enable lobby-screensaver.timer 2>/dev/null || true
 # Prevent nginx.service conflicts with lobby-app.service
 systemctl disable nginx.service 2>/dev/null || true
 systemctl mask nginx.service 2>/dev/null || true
 systemctl start lobby-kiosk.target
+systemctl start lobby-resource-monitor.timer 2>/dev/null || true
+systemctl start lobby-screensaver.timer 2>/dev/null || true
 
 # Boot optimization (idempotent)
 log "Optimizing boot configuration..."

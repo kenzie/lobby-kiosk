@@ -1,0 +1,10 @@
+[Unit]
+Description=Check screensaver schedule every minute
+Requires=lobby-screensaver.service
+
+[Timer]
+OnCalendar=*:*:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

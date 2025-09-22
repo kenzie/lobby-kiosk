@@ -1,0 +1,11 @@
+[Unit]
+Description=Lobby Resource Monitor
+PartOf=lobby-kiosk.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/lobby/scripts/resource-monitor.sh
+
+[Install]
+WantedBy=lobby-kiosk.target
