@@ -235,7 +235,18 @@ configure_kiosk_system() {
     if [[ ! -d "/tmp/lobby-kiosk-config" ]]; then
         error "Config files not found at /tmp/lobby-kiosk-config - base system setup may have failed"
     fi
-    cp -r /tmp/lobby-kiosk-config /mnt/tmp/lobby-kiosk-config
+    
+    # Debug: show what's in the host config directory
+    log "Debug: Contents of host /tmp/lobby-kiosk-config:"
+    ls -la /tmp/lobby-kiosk-config/configs/systemd/ || error "systemd configs not found on host"
+    
+    # Create target directory in chroot and copy files
+    mkdir -p /mnt/tmp/lobby-kiosk-config
+    cp -r /tmp/lobby-kiosk-config/* /mnt/tmp/lobby-kiosk-config/
+    
+    # Debug: show what's in the chroot config directory
+    log "Debug: Contents of chroot /mnt/tmp/lobby-kiosk-config:"
+    ls -la /mnt/tmp/lobby-kiosk-config/configs/systemd/ || error "systemd configs not found in chroot"
     
     # Install systemd services with explicit file names
     arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target /etc/systemd/system/
