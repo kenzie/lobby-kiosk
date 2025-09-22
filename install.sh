@@ -3,19 +3,22 @@ set -euo pipefail
 
 # Lobby Kiosk Installer for Lenovo M75q-1
 TARGET_DISK="/dev/nvme0n1"
-ROOT_PASSWORD="${ROOT_PASSWORD:-}"
+ROOT_PASSWORD=""
 
 log() { echo "[$(date +'%H:%M:%S')] $1"; }
 error() { echo "ERROR: $1"; exit 1; }
 
 [[ ! -f /etc/arch-release ]] && error "This installer requires Arch Linux"
 
-# Get password
-if [[ -z "${ROOT_PASSWORD:-}" ]]; then
+# Get password - always prompt
+while [[ -z "$ROOT_PASSWORD" ]]; do
     echo -n "Enter root password: "
     read -s ROOT_PASSWORD
     echo
-fi
+    if [[ -z "$ROOT_PASSWORD" ]]; then
+        echo "Password cannot be empty. Please try again."
+    fi
+done
 
 log "Lobby Kiosk Installer for Lenovo M75q-1"
 log "Target disk: $TARGET_DISK"
@@ -23,10 +26,20 @@ log "Target disk: $TARGET_DISK"
 # Verify target disk exists
 [[ ! -b "$TARGET_DISK" ]] && error "Target disk $TARGET_DISK not found"
 
-# Warning
-echo "WARNING: This will DESTROY all data on $TARGET_DISK"
-echo "Press Enter to continue or Ctrl+C to abort"
-read
+# Warning - force user confirmation
+echo ""
+echo "========================================"
+echo "WARNING: DESTRUCTIVE OPERATION AHEAD!"
+echo "========================================"
+echo "This will COMPLETELY DESTROY all data on $TARGET_DISK"
+echo "Target disk: $TARGET_DISK"
+echo ""
+echo "Are you absolutely sure you want to continue? (type 'YES' to proceed)"
+read -p "Confirmation: " CONFIRMATION
+if [[ "$CONFIRMATION" != "YES" ]]; then
+    echo "Installation aborted by user."
+    exit 0
+fi
 
 # Unmount any existing partitions
 umount ${TARGET_DISK}* 2>/dev/null || true
@@ -124,7 +137,24 @@ log "Running post-install configuration..."
 arch-chroot /mnt bash -c "curl -sSL https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/post-install.sh | bash"
 
 log "Installation complete!"
-echo "1. Unmount: umount -R /mnt"
-echo "2. Reboot: reboot"
-echo "3. Remove installation media"
-echo "4. System will auto-start kiosk display"
+echo ""
+
+# Unmount filesystems first
+log "Unmounting filesystems..."
+umount -R /mnt || {
+    error "Failed to unmount filesystems. Please unmount manually: umount -R /mnt"
+}
+
+# Prompt for USB removal
+echo "========================================"
+echo "REMOVE INSTALLATION MEDIA NOW"
+echo "========================================"
+echo "Please remove the USB installation media"
+echo "from the system before rebooting."
+echo ""
+echo "Press Enter after removing the USB drive to reboot..."
+read
+
+log "Rebooting system..."
+echo "System will start automatically with the kiosk display."
+reboot
