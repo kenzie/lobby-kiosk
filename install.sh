@@ -50,28 +50,18 @@ done
 
 log "Using disk: $TARGET_DISK"
 
-# Partition disk
+# Partition disk  
 log "Partitioning disk..."
 
-# Ensure disk is not mounted
-umount "${TARGET_DISK}"* 2>/dev/null || true
+# Use sgdisk instead of parted (more reliable)
+sgdisk --zap-all "$TARGET_DISK"
+sgdisk --clear \
+       --new=1:1MiB:513MiB --typecode=1:ef00 --change-name=1:'EFI System' \
+       --new=2:513MiB:0 --typecode=2:8300 --change-name=2:'Linux Root' \
+       "$TARGET_DISK"
 
-# Clear existing partitions thoroughly
-wipefs -af "$TARGET_DISK"
-dd if=/dev/zero of="$TARGET_DISK" bs=1M count=100 2>/dev/null || true
-
-# Create partition table
-parted -s "$TARGET_DISK" mklabel gpt
-parted -s "$TARGET_DISK" mkpart primary fat32 1MiB 513MiB
-parted -s "$TARGET_DISK" set 1 esp on
-parted -s "$TARGET_DISK" mkpart primary ext4 513MiB 100%
-
-# Force kernel to re-read partition table
-sync
-partprobe "$TARGET_DISK"
-sleep 3
-udevadm settle
-sleep 2
+# Wait for partitions to appear
+sleep 5
 
 # Format partitions
 boot_part="${TARGET_DISK}1"
