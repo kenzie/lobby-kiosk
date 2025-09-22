@@ -45,9 +45,11 @@ cp configs/systemd/*.service /etc/systemd/system/
 cp configs/systemd/*.target /etc/systemd/system/
 systemctl daemon-reload
 
-# Update nginx config
-log "Updating nginx configuration..."
-cp configs/nginx/nginx.conf /etc/nginx/
+# Install serve package if not present
+if ! command -v serve &> /dev/null; then
+    log "Installing serve package..."
+    npm install -g serve
+fi
 
 # Update management tools
 log "Updating management tools..."
@@ -72,13 +74,9 @@ log "Updating version..."
 echo "1.0.1" > "$KIOSK_DIR/config/version"
 chown lobby:lobby "$KIOSK_DIR/config/version" || sudo chown lobby:lobby "$KIOSK_DIR/config/version"
 
-# Test nginx config
-log "Testing nginx configuration..."
-nginx -t || error "Invalid nginx configuration"
-
 # Restart services
 log "Restarting services..."
-systemctl restart nginx.service
+systemctl restart lobby-app.service
 systemctl restart lobby-display.service
 
 # Wait for services to stabilize
@@ -90,8 +88,8 @@ if ! systemctl is-active --quiet lobby-display.service; then
     error "lobby-display.service failed to start"
 fi
 
-if ! systemctl is-active --quiet nginx.service; then
-    error "nginx.service failed to start"
+if ! systemctl is-active --quiet lobby-app.service; then
+    error "lobby-app.service failed to start"
 fi
 
 # Test app accessibility

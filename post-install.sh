@@ -68,9 +68,11 @@ cp /tmp/lobby-kiosk-config/configs/systemd/*.target /etc/systemd/system/
 cp /tmp/lobby-kiosk-config/configs/systemd/*.service /etc/systemd/system/
 cp /tmp/lobby-kiosk-config/configs/systemd/*.timer /etc/systemd/system/ 2>/dev/null || true
 
-# Install nginx config
-log "Installing nginx configuration..."
-cp /tmp/lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
+# Install serve package for app serving
+if ! command -v serve &> /dev/null; then
+    log "Installing serve package..."
+    npm install -g serve
+fi
 
 # Install font config
 log "Installing font configuration..."
@@ -118,9 +120,8 @@ systemctl daemon-reload
 systemctl enable lobby-kiosk.target sshd tailscaled
 systemctl enable lobby-resource-monitor.timer 2>/dev/null || true
 systemctl enable lobby-screensaver.timer 2>/dev/null || true
-# Use standard nginx.service instead of custom lobby-app.service
-systemctl unmask nginx.service 2>/dev/null || true
-systemctl enable nginx.service
+# Enable lobby-app.service (serve-based) instead of nginx
+systemctl enable lobby-app.service
 systemctl start lobby-kiosk.target
 systemctl start lobby-resource-monitor.timer 2>/dev/null || true
 systemctl start lobby-screensaver.timer 2>/dev/null || true

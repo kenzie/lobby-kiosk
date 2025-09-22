@@ -48,8 +48,14 @@ echo "Deploying new version..."
 ln -sfn "$RELEASE_DIR" "$CURRENT_LINK.new"
 mv "$CURRENT_LINK.new" "$CURRENT_LINK"
 
-# Reload web server
-sudo systemctl reload nginx
+# Install serve package globally if not present
+if ! command -v serve &> /dev/null; then
+    echo "Installing serve package..."
+    npm install -g serve
+fi
+
+# Restart lobby-app service (serve-based)
+sudo systemctl restart lobby-app.service
 
 # Cleanup old releases (keep last 3)
 cd /opt/lobby/app/releases

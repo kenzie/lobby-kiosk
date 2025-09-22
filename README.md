@@ -103,7 +103,7 @@ During screensaver hours (11 PM - 7 AM), the system provides an 8-hour maintenan
 ## System Architecture
 
 ### Services
-- **nginx.service** - Web server for Vue application
+- **lobby-app.service** - Serve-based static file server for Vue application
 - **lobby-display.service** - X11 and Chromium display
 - **lobby-watchdog.service** - Health monitoring and recovery
 - **lobby-kiosk.target** - Main service orchestration

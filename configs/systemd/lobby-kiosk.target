@@ -1,6 +1,6 @@
 [Unit]
 Description=Lobby Kiosk System
-Wants=nginx.service lobby-display.service lobby-watchdog.service
+Wants=lobby-app.service lobby-display.service lobby-watchdog.service
 
 [Install]
 WantedBy=multi-user.target

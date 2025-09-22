@@ -1,0 +1,18 @@
+[Unit]
+Description=Lobby App Server (serve)
+After=local-fs.target
+PartOf=lobby-kiosk.target
+DefaultDependencies=no
+
+[Service]
+Type=exec
+User=lobby
+WorkingDirectory=/opt/lobby/app/current/dist
+ExecStart=/usr/bin/serve -s . -l 8080
+Restart=always
+RestartSec=3
+TimeoutStartSec=10
+KillMode=mixed
+
+[Install]
+WantedBy=lobby-kiosk.target
