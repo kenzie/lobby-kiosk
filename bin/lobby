@@ -75,7 +75,7 @@ cmd_status() {
     
     # Display
     echo -e "${BLUE}Display:${NC}"
-    if pgrep -f chromium >/dev/null && xset -display :0 q >/dev/null 2>&1; then
+    if pgrep -f chromium >/dev/null && sudo -u "$KIOSK_USER" xset -display :0 q >/dev/null 2>&1; then
         echo -e "Display: ${GREEN}ACTIVE${NC}"
     else
         echo -e "Display: ${RED}INACTIVE${NC}"
@@ -130,7 +130,7 @@ cmd_monitor() {
             echo -e "App: ${RED}UNHEALTHY${NC}"
         fi
         
-        if pgrep -f chromium >/dev/null && xset -display :0 q >/dev/null 2>&1; then
+        if pgrep -f chromium >/dev/null && sudo -u "$KIOSK_USER" xset -display :0 q >/dev/null 2>&1; then
             echo -e "Display: ${GREEN}ACTIVE${NC}"
         else
             echo -e "Display: ${RED}INACTIVE${NC}"
