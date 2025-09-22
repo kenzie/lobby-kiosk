@@ -67,7 +67,7 @@ lobby screensaver status  # Check current state
 ### System Operations
 ```bash
 lobby update             # Update Vue application
-lobby update-system      # Update system configuration
+lobby upgrade            # Upgrade kiosk system
 lobby restart           # Restart all services
 lobby fix               # Auto-fix common issues
 lobby monitor           # Real-time monitoring
@@ -156,7 +156,7 @@ git commit -m "Update configuration"
 git push origin main
 
 # Deploy to kiosk
-sudo lobby update-system
+sudo lobby upgrade
 ```
 
 ### Building Vue Application

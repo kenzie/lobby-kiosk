@@ -24,7 +24,7 @@ show_help() {
     echo "  logs        Show recent logs"
     echo "  restart     Restart services (requires sudo)"
     echo "  update      Update application"
-    echo "  update-system  Update system configs (requires sudo)"
+    echo "  upgrade        Upgrade kiosk system (requires sudo)"
     echo "  monitor     Real-time monitoring"
     echo "  fix         Auto-fix issues (requires sudo)"
     echo "  screensaver {on|off|toggle|status}  Control screensaver"
@@ -32,7 +32,7 @@ show_help() {
 }
 
 check_sudo() {
-    if [[ $EUID -ne 0 ]] && [[ "$1" =~ ^(restart|fix|update-system)$ ]]; then
+    if [[ $EUID -ne 0 ]] && [[ "$1" =~ ^(restart|fix|upgrade)$ ]]; then
         error "Command '$1' requires sudo"
         exit 1
     fi
@@ -218,7 +218,7 @@ main() {
         "logs") cmd_logs ;;
         "restart") check_sudo "$command"; cmd_restart ;;
         "update") cmd_update ;;
-        "update-system") check_sudo "$command"; cmd_update_system ;;
+        "upgrade"|"update-system") check_sudo "$command"; cmd_update_system ;;
         "monitor") cmd_monitor ;;
         "fix") check_sudo "$command"; cmd_fix ;;
         "screensaver") shift; cmd_screensaver "$@" ;;
