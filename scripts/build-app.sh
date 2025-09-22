@@ -45,8 +45,8 @@ fi
 
 # Atomic switch to new version
 echo "Deploying new version..."
-ln -sfn "$RELEASE_DIR" "$CURRENT_LINK.new"
-mv "$CURRENT_LINK.new" "$CURRENT_LINK"
+sudo ln -sfn "$RELEASE_DIR" "$CURRENT_LINK.new"
+sudo mv "$CURRENT_LINK.new" "$CURRENT_LINK"
 
 # Install serve package globally if not present
 if ! command -v serve &> /dev/null; then
