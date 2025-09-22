@@ -55,6 +55,8 @@ if [[ $? -ne 0 ]]; then
 fi
 echo "Created temp symlink: $(readlink $CURRENT_LINK.new)"
 
+# Remove existing symlink first to avoid any issues
+sudo rm -f "$CURRENT_LINK"
 sudo mv "$CURRENT_LINK.new" "$CURRENT_LINK"
 if [[ $? -ne 0 ]]; then
     echo "Failed to move symlink"
