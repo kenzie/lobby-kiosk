@@ -103,7 +103,7 @@ log "Configuring sudo permissions..."
 cat > /etc/sudoers.d/lobby << EOF
 $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl
 $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/reboot
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/local/bin/lobby update-system
+$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/local/bin/lobby *
 $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/xset
 $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/pacman -S --noconfirm xdotool
 EOF
