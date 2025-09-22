@@ -1,6 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
+# Ensure we have a proper TTY for interactive prompts
+if [[ ! -t 0 ]]; then
+    echo "Installer must be run with proper TTY access."
+    echo "Download and run directly instead:"
+    echo "  curl -O https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/install.sh"
+    echo "  chmod +x install.sh"
+    echo "  ./install.sh"
+    exit 1
+fi
+
 # Lobby Kiosk Installer for Lenovo M75q-1
 TARGET_DISK="/dev/nvme0n1"
 ROOT_PASSWORD="${ROOT_PASSWORD:-}"
