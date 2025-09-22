@@ -21,6 +21,25 @@ exec chromium \
     --disable-plugins \
     --disable-sync \
     --disable-translate \
+    --disable-background-networking \
+    --disable-background-timer-throttling \
+    --disable-backgrounding-occluded-windows \
+    --disable-breakpad \
+    --disable-client-side-phishing-detection \
+    --disable-component-extensions-with-background-pages \
+    --disable-default-apps \
+    --disable-features=VizDisplayCompositor \
+    --disable-hang-monitor \
+    --disable-ipc-flooding-protection \
+    --disable-popup-blocking \
+    --disable-prompt-on-repost \
+    --disable-renderer-backgrounding \
+    --disable-sync \
+    --disable-web-security \
+    --metrics-recording-only \
+    --no-crash-upload \
+    --no-default-browser-check \
+    --no-pings \
     --hide-scrollbars \
     --no-first-run \
     --disable-infobars \
