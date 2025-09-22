@@ -58,8 +58,8 @@ nginx -t || error "Invalid nginx configuration"
 
 # Restart services
 log "Restarting services..."
-systemctl restart lobby-display.service
 systemctl restart lobby-app.service
+systemctl restart lobby-display.service
 
 # Wait for services to stabilize
 sleep 5
