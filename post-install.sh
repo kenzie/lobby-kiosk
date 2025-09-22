@@ -133,11 +133,14 @@ systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true
 # Configure GRUB for silent boot
 sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' /etc/default/grub
 sed -i 's/GRUB_TIMEOUT_STYLE=menu/GRUB_TIMEOUT_STYLE=hidden/' /etc/default/grub
-sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="[^"]*"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=0 systemd.show_status=0 rd.udev.log_level=0"/' /etc/default/grub
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="[^"]*"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=0 systemd.show_status=0 rd.udev.log_level=0 vt.global_cursor_default=0 plymouth.enable=0 rd.systemd.show_status=0 rd.udev.log-priority=0"/' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
-# Suppress TTY messages
+# Suppress TTY messages and boot logo
 systemctl mask getty@tty2.service getty@tty3.service getty@tty4.service getty@tty5.service getty@tty6.service 2>/dev/null || true
+
+# Disable kernel messages to console
+echo 'kernel.printk = 0 0 0 0' > /etc/sysctl.d/20-quiet-printk.conf
 
 # Configure X11 permissions for kiosk user
 mkdir -p /etc/X11
