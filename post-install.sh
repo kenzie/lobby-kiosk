@@ -109,7 +109,7 @@ $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/pacman -S --noconfirm xdotool
 EOF
 
 # Set version
-echo "1.0.0" > "$KIOSK_DIR/config/version"
+echo "1.0.1" > "$KIOSK_DIR/config/version"
 chown "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/config/version"
 
 # Enable services (idempotent)
