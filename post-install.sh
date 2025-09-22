@@ -101,8 +101,7 @@ EOF
 # Configure sudo permissions (idempotent)
 log "Configuring sudo permissions..."
 cat > /etc/sudoers.d/lobby << EOF
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart lobby-*.service
-$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload nginx
+$KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl
 $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/reboot
 $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/local/bin/lobby update-system
 $KIOSK_USER ALL=(ALL) NOPASSWD: /usr/bin/xset
