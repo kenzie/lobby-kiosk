@@ -12,6 +12,15 @@ done
 
 echo "Starting Chromium kiosk mode..."
 
+# Check if we should start in screensaver mode
+if [[ -f "/opt/lobby/config/screensaver.state" ]] && [[ $(cat /opt/lobby/config/screensaver.state 2>/dev/null) == "active" ]]; then
+    URL="file:///opt/lobby/scripts/screensaver.html"
+    echo "Starting in screensaver mode"
+else
+    URL="http://localhost:8080"
+    echo "Starting in normal mode"
+fi
+
 exec chromium \
     --no-sandbox \
     --disable-dev-shm-usage \
@@ -62,4 +71,4 @@ exec chromium \
     --start-fullscreen \
     --window-size=3840,2160 \
     --force-device-scale-factor=1 \
-    http://localhost:8080
+    "$URL"

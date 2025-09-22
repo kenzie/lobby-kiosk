@@ -28,14 +28,15 @@ activate_screensaver() {
     log "Activating screensaver"
     echo "active" > "$SCREENSAVER_STATE_FILE"
     
-    # Navigate Chromium to screensaver page
+    # Use a simpler approach - restart chromium with screensaver URL
     export DISPLAY=:0
     if pgrep -f chromium >/dev/null; then
-        # Use xdotool to navigate to screensaver
-        xdotool search --name "Chromium" windowactivate --sync key ctrl+l
-        sleep 0.5
-        xdotool type "file://$SCREENSAVER_FILE"
-        xdotool key Return
+        log "Restarting display service with screensaver"
+        sudo systemctl restart lobby-display.service
+        # Wait for restart
+        sleep 5
+        # Override the normal URL temporarily
+        export SCREENSAVER_MODE=1
     else
         log "Chromium not found, cannot activate screensaver"
         return 1
@@ -46,13 +47,13 @@ deactivate_screensaver() {
     log "Deactivating screensaver"
     echo "inactive" > "$SCREENSAVER_STATE_FILE"
     
-    # Navigate Chromium back to normal display
+    # Restart display service to return to normal
     export DISPLAY=:0
     if pgrep -f chromium >/dev/null; then
-        xdotool search --name "Chromium" windowactivate --sync key ctrl+l
-        sleep 0.5
-        xdotool type "$NORMAL_URL"
-        xdotool key Return
+        log "Restarting display service to normal mode"
+        unset SCREENSAVER_MODE
+        sudo systemctl restart lobby-display.service
+        sleep 5
     else
         log "Chromium not found, cannot deactivate screensaver"
         return 1
