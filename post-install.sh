@@ -130,9 +130,10 @@ log "Optimizing boot configuration..."
 systemctl set-default multi-user.target
 systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true
 
-# Configure GRUB for fast boot
+# Configure GRUB for silent boot
 sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' /etc/default/grub
 sed -i 's/#GRUB_TIMEOUT_STYLE=menu/GRUB_TIMEOUT_STYLE=hidden/' /etc/default/grub
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="[^"]*"/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=0 systemd.show_status=0 rd.udev.log_level=0"/' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Configure X11 permissions for kiosk user
