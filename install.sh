@@ -35,26 +35,19 @@ echo "This will COMPLETELY DESTROY all data on $TARGET_DISK"
 echo "Target disk: $TARGET_DISK"
 echo ""
 echo "Are you absolutely sure you want to continue? (type 'YES' to proceed)"
-echo "DEBUG: About to read confirmation..."
-CONFIRMATION=""
+
+# Force interactive mode and use exec to ensure proper TTY handling
+exec < /dev/tty
 while true; do
-    echo -n "Confirmation: "
-    read CONFIRMATION </dev/tty
-    echo "DEBUG: Received input: '$CONFIRMATION' (length: ${#CONFIRMATION})"
+    printf "Confirmation: "
+    read -r CONFIRMATION
     
     if [[ "$CONFIRMATION" == "YES" ]]; then
-        echo "DEBUG: Confirmation accepted, proceeding..."
         break
-    elif [[ -z "$CONFIRMATION" ]]; then
-        echo "DEBUG: Empty input received"
-        echo "Please type 'YES' to continue or press Ctrl+C to abort."
     else
-        echo "DEBUG: Invalid input: '$CONFIRMATION'"
-        echo "You typed '$CONFIRMATION'. Please type exactly 'YES' to continue or press Ctrl+C to abort."
+        echo "You must type exactly 'YES' to continue or press Ctrl+C to abort."
+        echo "You entered: '$CONFIRMATION'"
     fi
-    
-    # Add a small delay to see what's happening
-    sleep 1
 done
 
 # Unmount any existing partitions
