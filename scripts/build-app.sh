@@ -45,17 +45,23 @@ fi
 
 # Atomic switch to new version
 echo "Deploying new version..."
+echo "Current symlink before update: $(readlink $CURRENT_LINK 2>/dev/null || echo 'none')"
+echo "Target release: $RELEASE_DIR"
+
 sudo ln -sfn "$RELEASE_DIR" "$CURRENT_LINK.new"
 if [[ $? -ne 0 ]]; then
     echo "Failed to create symlink"
     exit 1
 fi
+echo "Created temp symlink: $(readlink $CURRENT_LINK.new)"
+
 sudo mv "$CURRENT_LINK.new" "$CURRENT_LINK"
 if [[ $? -ne 0 ]]; then
     echo "Failed to move symlink"
     exit 1
 fi
-echo "Symlink updated to: $(basename $(readlink $CURRENT_LINK))"
+echo "Symlink after update: $(readlink $CURRENT_LINK)"
+ls -la "$CURRENT_LINK"
 
 # Install serve package globally if not present
 if ! command -v serve &> /dev/null; then
