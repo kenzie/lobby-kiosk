@@ -34,8 +34,10 @@ git clone "$REPO_URL" .
 # Update scripts
 log "Updating scripts..."
 cp scripts/*.sh "$KIOSK_DIR/scripts/"
+cp scripts/*.html "$KIOSK_DIR/scripts/" 2>/dev/null || true
 chmod +x "$KIOSK_DIR/scripts"/*.sh
-chown lobby:lobby "$KIOSK_DIR/scripts"/*.sh
+chmod 644 "$KIOSK_DIR/scripts"/*.html 2>/dev/null || true
+chown lobby:lobby "$KIOSK_DIR/scripts"/*
 
 # Update systemd services
 log "Updating systemd services..."
