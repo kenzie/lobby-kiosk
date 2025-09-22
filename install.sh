@@ -230,50 +230,38 @@ configure_kiosk_system() {
     arch-chroot /mnt mkdir -p /opt/lobby/app/{releases,shared}
     arch-chroot /mnt chown -R lobby:lobby /opt/lobby
     
-    # Copy already downloaded config files into chroot
-    log "Copying config files into chroot..."
+    # Copy config files directly from host to chroot destinations
+    log "Installing systemd services directly from host..."
     if [[ ! -d "/tmp/lobby-kiosk-config" ]]; then
         error "Config files not found at /tmp/lobby-kiosk-config - base system setup may have failed"
     fi
     
-    # Debug: show what's in the host config directory
-    log "Debug: Contents of host /tmp/lobby-kiosk-config:"
-    ls -la /tmp/lobby-kiosk-config/configs/systemd/ || error "systemd configs not found on host"
-    
-    # Create target directory in chroot and copy files
-    mkdir -p /mnt/tmp/lobby-kiosk-config
-    cp -r /tmp/lobby-kiosk-config/* /mnt/tmp/lobby-kiosk-config/
-    
-    # Debug: show what's in the chroot config directory
-    log "Debug: Contents of chroot /mnt/tmp/lobby-kiosk-config:"
-    ls -la /mnt/tmp/lobby-kiosk-config/configs/systemd/ || error "systemd configs not found in chroot"
-    
-    # Install systemd services with explicit file names
+    # Copy systemd services directly to chroot destination
     log "Installing lobby-kiosk.target..."
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target /etc/systemd/system/
+    cp /tmp/lobby-kiosk-config/configs/systemd/lobby-kiosk.target /mnt/etc/systemd/system/
     log "Installing lobby-app.service..."
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-app.service /etc/systemd/system/
+    cp /tmp/lobby-kiosk-config/configs/systemd/lobby-app.service /mnt/etc/systemd/system/
     log "Installing lobby-display.service..."
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-display.service /etc/systemd/system/
+    cp /tmp/lobby-kiosk-config/configs/systemd/lobby-display.service /mnt/etc/systemd/system/
     log "Installing lobby-watchdog.service..."
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/systemd/lobby-watchdog.service /etc/systemd/system/
+    cp /tmp/lobby-kiosk-config/configs/systemd/lobby-watchdog.service /mnt/etc/systemd/system/
     
-    # Install nginx config
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/nginx/nginx.conf /etc/nginx/
+    # Install nginx config directly
+    log "Installing nginx config..."
+    cp /tmp/lobby-kiosk-config/configs/nginx/nginx.conf /mnt/etc/nginx/
     
-    # Install font config
-    arch-chroot /mnt mkdir -p /etc/fonts
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/configs/fonts/local.conf /etc/fonts/
+    # Install font config directly
+    log "Installing font config..."
+    mkdir -p /mnt/etc/fonts
+    cp /tmp/lobby-kiosk-config/configs/fonts/local.conf /mnt/etc/fonts/
     
-    # Install scripts with explicit file names
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/build-app.sh /opt/lobby/scripts/
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/chromium-kiosk.sh /opt/lobby/scripts/
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/setup-display.sh /opt/lobby/scripts/
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/scripts/watchdog.sh /opt/lobby/scripts/
-    arch-chroot /mnt cp /tmp/lobby-kiosk-config/bin/lobby /usr/local/bin/
-    
-    # Cleanup
-    arch-chroot /mnt rm -rf /tmp/lobby-kiosk-config
+    # Install scripts directly
+    log "Installing management scripts..."
+    cp /tmp/lobby-kiosk-config/scripts/build-app.sh /mnt/opt/lobby/scripts/
+    cp /tmp/lobby-kiosk-config/scripts/chromium-kiosk.sh /mnt/opt/lobby/scripts/
+    cp /tmp/lobby-kiosk-config/scripts/setup-display.sh /mnt/opt/lobby/scripts/
+    cp /tmp/lobby-kiosk-config/scripts/watchdog.sh /mnt/opt/lobby/scripts/
+    cp /tmp/lobby-kiosk-config/bin/lobby /mnt/usr/local/bin/
     
     # Set permissions
     arch-chroot /mnt chmod +x /opt/lobby/scripts/build-app.sh /opt/lobby/scripts/chromium-kiosk.sh /opt/lobby/scripts/setup-display.sh /opt/lobby/scripts/watchdog.sh /usr/local/bin/lobby
