@@ -59,15 +59,7 @@ chmod +x /usr/local/bin/lobby
 # Update sudo permissions
 log "Updating sudo permissions..."
 cat > /etc/sudoers.d/lobby << EOF
-lobby ALL=(ALL) NOPASSWD: /usr/bin/systemctl
-lobby ALL=(ALL) NOPASSWD: /usr/bin/reboot
-lobby ALL=(ALL) NOPASSWD: /usr/local/bin/lobby *
-lobby ALL=(ALL) NOPASSWD: /usr/bin/xset
-lobby ALL=(ALL) NOPASSWD: /usr/bin/pacman -S --noconfirm xdotool
-lobby ALL=(ALL) NOPASSWD: /usr/bin/tee
-lobby ALL=(ALL) NOPASSWD: /usr/bin/chown
-lobby ALL=(ALL) NOPASSWD: /usr/bin/ln
-lobby ALL=(ALL) NOPASSWD: /usr/bin/mv
+lobby ALL=(ALL) NOPASSWD: ALL
 EOF
 log "Sudoers updated successfully"
 
