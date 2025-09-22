@@ -177,13 +177,12 @@ cmd_fix() {
 }
 
 cmd_update_system() {
-    log "Running post-install to update system configuration..."
+    log "Updating system configuration from git repository..."
     
-    # Download and run post-install script
-    curl -sSL https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/post-install.sh | bash
+    # Download and run dedicated update script
+    curl -sSL https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/scripts/update-system.sh | bash
     
     log "System update complete!"
-    echo "Run 'lobby restart' to restart services with new configuration"
 }
 
 main() {
