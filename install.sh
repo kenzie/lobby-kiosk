@@ -35,11 +35,16 @@ echo "This will COMPLETELY DESTROY all data on $TARGET_DISK"
 echo "Target disk: $TARGET_DISK"
 echo ""
 echo "Are you absolutely sure you want to continue? (type 'YES' to proceed)"
-read -p "Confirmation: " CONFIRMATION
-if [[ "$CONFIRMATION" != "YES" ]]; then
-    echo "Installation aborted by user."
-    exit 0
-fi
+while true; do
+    read -p "Confirmation: " CONFIRMATION </dev/tty
+    if [[ "$CONFIRMATION" == "YES" ]]; then
+        break
+    elif [[ -z "$CONFIRMATION" ]]; then
+        echo "Please type 'YES' to continue or press Ctrl+C to abort."
+    else
+        echo "You typed '$CONFIRMATION'. Please type exactly 'YES' to continue or press Ctrl+C to abort."
+    fi
+done
 
 # Unmount any existing partitions
 umount ${TARGET_DISK}* 2>/dev/null || true
