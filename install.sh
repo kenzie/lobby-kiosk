@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Simple Working Lobby Kiosk Installer
+# Lobby Kiosk Installer for Lenovo M75q-1
+TARGET_DISK="/dev/nvme0n1"
 ROOT_PASSWORD="${ROOT_PASSWORD:-}"
 
 log() { echo "[$(date +'%H:%M:%S')] $1"; }
@@ -16,27 +17,29 @@ if [[ -z "${ROOT_PASSWORD:-}" ]]; then
     echo
 fi
 
-log "Starting installer..."
+log "Lobby Kiosk Installer for Lenovo M75q-1"
+log "Target disk: $TARGET_DISK"
 
-# Find disk
-TARGET_DISK=""
-for disk in /dev/vda /dev/sda /dev/nvme0n1; do
-    if [[ -b "$disk" ]]; then
-        TARGET_DISK="$disk"
-        break
-    fi
-done
+# Verify target disk exists
+[[ ! -b "$TARGET_DISK" ]] && error "Target disk $TARGET_DISK not found"
 
-[[ -z "$TARGET_DISK" ]] && error "No disk found"
-log "Using disk: $TARGET_DISK"
+# Warning
+echo "WARNING: This will DESTROY all data on $TARGET_DISK"
+echo "Press Enter to continue or Ctrl+C to abort"
+read
 
-# Partition
-log "Partitioning..."
+# Unmount any existing partitions
+umount ${TARGET_DISK}* 2>/dev/null || true
+
+# Wipe and partition using fdisk
+log "Partitioning $TARGET_DISK..."
+wipefs -af "$TARGET_DISK"
+
 (
 echo g      # create GPT partition table
 echo n      # new partition
 echo 1      # partition number 1
-echo        # default - start at beginning of disk
+echo        # default start
 echo +512M  # 512MB EFI partition
 echo t      # change type
 echo 1      # EFI System
@@ -47,48 +50,75 @@ echo        # default end (rest of disk)
 echo w      # write changes
 ) | fdisk "$TARGET_DISK"
 
-# Wait and format
+# Wait for partitions to appear
 sleep 3
-mkfs.fat -F32 "${TARGET_DISK}1" || mkfs.fat -F32 "${TARGET_DISK}p1"
-mkfs.ext4 -F "${TARGET_DISK}2" || mkfs.ext4 -F "${TARGET_DISK}p1"
+
+# Format partitions
+log "Formatting partitions..."
+mkfs.fat -F32 "${TARGET_DISK}p1"
+mkfs.ext4 -F "${TARGET_DISK}p2"
 
 # Mount
-if [[ -b "${TARGET_DISK}1" ]]; then
-    mount "${TARGET_DISK}2" /mnt
-    mkdir -p /mnt/boot
-    mount "${TARGET_DISK}1" /mnt/boot
-else
-    mount "${TARGET_DISK}p2" /mnt
-    mkdir -p /mnt/boot
-    mount "${TARGET_DISK}p1" /mnt/boot
-fi
+log "Mounting filesystems..."
+mount "${TARGET_DISK}p2" /mnt
+mkdir -p /mnt/boot
+mount "${TARGET_DISK}p1" /mnt/boot
 
-# Install
-log "Installing base system..."
+# Install base system optimized for Lenovo M75q-1 (AMD Ryzen)
+log "Installing base system for Lenovo M75q-1..."
 pacman -Sy --noconfirm
-pacstrap /mnt base linux linux-firmware grub efibootmgr networkmanager openssh sudo
+pacstrap /mnt \
+    base linux linux-firmware \
+    grub efibootmgr \
+    networkmanager openssh sudo \
+    amd-ucode \
+    mesa xf86-video-amdgpu
 
-# Configure
+# Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
+# Configure system
+log "Configuring system..."
 arch-chroot /mnt bash -c "
+# Timezone
 ln -sf /usr/share/zoneinfo/America/Halifax /etc/localtime
 hwclock --systohc
+
+# Locale
 echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen
 locale-gen
 echo 'LANG=en_US.UTF-8' > /etc/locale.conf
+
+# Hostname
 echo 'lobby-kiosk' > /etc/hostname
+echo '127.0.0.1 localhost
+::1 localhost
+127.0.1.1 lobby-kiosk.localdomain lobby-kiosk' > /etc/hosts
+
+# Root password
 echo 'root:$ROOT_PASSWORD' | chpasswd
+
+# GRUB bootloader
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
+
+# Enable services
 systemctl enable NetworkManager sshd
+
+# Create lobby user
 useradd -m -G wheel lobby
 echo 'lobby:$ROOT_PASSWORD' | chpasswd
 echo 'lobby ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/lobby
+
+# Configure autologin
 mkdir -p /etc/systemd/system/getty@tty1.service.d/
 echo '[Service]
 ExecStart=
 ExecStart=-/usr/bin/agetty --autologin lobby --noclear %I \$TERM' > /etc/systemd/system/getty@tty1.service.d/override.conf
 "
 
-log "Done! Unmount with: umount -R /mnt && reboot"
+log "Installation complete!"
+echo "1. Unmount: umount -R /mnt"
+echo "2. Reboot: reboot"
+echo "3. Remove installation media"
+echo "4. System will auto-login as 'lobby'"
