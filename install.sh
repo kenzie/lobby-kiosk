@@ -36,13 +36,12 @@ echo "Target disk: $TARGET_DISK"
 echo ""
 echo "Are you absolutely sure you want to continue? (type 'YES' to proceed)"
 
-# Force interactive mode and use exec to ensure proper TTY handling
-exec < /dev/tty
 while true; do
     printf "Confirmation: "
-    read -r CONFIRMATION
+    read -r CONFIRMATION < /dev/tty
     
     if [[ "$CONFIRMATION" == "YES" ]]; then
+        echo "Proceeding with installation..."
         break
     else
         echo "You must type exactly 'YES' to continue or press Ctrl+C to abort."
