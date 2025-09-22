@@ -106,7 +106,9 @@ chown "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/config/version"
 # Enable services (idempotent)
 log "Enabling services..."
 systemctl daemon-reload
-systemctl enable lobby-kiosk.target sshd tailscaled nginx
+systemctl enable lobby-kiosk.target sshd tailscaled
+systemctl disable nginx.service 2>/dev/null || true
+systemctl mask nginx.service 2>/dev/null || true
 systemctl start lobby-kiosk.target
 
 # Boot optimization (idempotent)
