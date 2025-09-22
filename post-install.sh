@@ -113,6 +113,11 @@ log "Optimizing boot configuration..."
 systemctl set-default multi-user.target
 systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true
 
+# Configure GRUB for fast boot
+sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' /etc/default/grub
+sed -i 's/#GRUB_TIMEOUT_STYLE=menu/GRUB_TIMEOUT_STYLE=hidden/' /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
+
 # Cleanup
 rm -rf /tmp/lobby-kiosk-config
 
