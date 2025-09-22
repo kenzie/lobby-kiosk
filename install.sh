@@ -118,7 +118,7 @@ systemctl enable NetworkManager sshd
 
 # Create lobby user
 useradd -m -s /bin/bash -G wheel lobby
-echo 'lobby:lobby' | chpasswd
+echo 'lobby:$ROOT_PASSWORD' | chpasswd
 
 # Configure autologin
 mkdir -p /etc/systemd/system/getty@tty1.service.d/
