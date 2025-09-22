@@ -1,146 +1,94 @@
 #!/bin/bash
 set -euo pipefail
 
-# Simple Lobby Kiosk Installer
-TARGET_DISK="/dev/sda"
+# Simple Working Lobby Kiosk Installer
 ROOT_PASSWORD="${ROOT_PASSWORD:-}"
 
-# Colors
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m'
+log() { echo "[$(date +'%H:%M:%S')] $1"; }
+error() { echo "ERROR: $1"; exit 1; }
 
-log() { echo -e "${GREEN}[$(date +'%H:%M:%S')] $1${NC}"; }
-error() { echo -e "${RED}[$(date +'%H:%M:%S')] ERROR: $1${NC}"; exit 1; }
-
-# Verify we're on live ISO
 [[ ! -f /etc/arch-release ]] && error "This installer requires Arch Linux"
 
-# Prompt for root password
+# Get password
 if [[ -z "${ROOT_PASSWORD:-}" ]]; then
-    while true; do
-        echo -n "Enter root password: "
-        read -s password1
-        echo
-        echo -n "Confirm password: "
-        read -s password2
-        echo
-        
-        if [[ "$password1" == "$password2" && -n "$password1" ]]; then
-            ROOT_PASSWORD="$password1"
-            break
-        else
-            echo "Passwords do not match or empty. Try again."
-        fi
-    done
+    echo -n "Enter root password: "
+    read -s ROOT_PASSWORD
+    echo
 fi
 
-log "Starting lobby-kiosk installer..."
+log "Starting installer..."
 
-# Auto-detect largest disk
-log "Detecting target disk..."
-largest_size=0
-for disk in /dev/sd? /dev/nvme?n1 /dev/vd?; do
+# Find disk
+TARGET_DISK=""
+for disk in /dev/vda /dev/sda /dev/nvme0n1; do
     if [[ -b "$disk" ]]; then
-        size=$(lsblk -b -d -o SIZE "$disk" 2>/dev/null | tail -1 | tr -d ' ')
-        if [[ $size -gt $largest_size ]]; then
-            largest_size=$size
-            TARGET_DISK="$disk"
-        fi
+        TARGET_DISK="$disk"
+        break
     fi
 done
 
-if [[ -z "$TARGET_DISK" || "$TARGET_DISK" == "/dev/sda" ]]; then
-    error "No suitable disk found"
+[[ -z "$TARGET_DISK" ]] && error "No disk found"
+log "Using disk: $TARGET_DISK"
+
+# Partition
+log "Partitioning..."
+(
+echo g      # create GPT partition table
+echo n      # new partition
+echo 1      # partition number 1
+echo        # default - start at beginning of disk
+echo +512M  # 512MB EFI partition
+echo t      # change type
+echo 1      # EFI System
+echo n      # new partition
+echo 2      # partition number 2
+echo        # default start
+echo        # default end (rest of disk)
+echo w      # write changes
+) | fdisk "$TARGET_DISK"
+
+# Wait and format
+sleep 3
+mkfs.fat -F32 "${TARGET_DISK}1" || mkfs.fat -F32 "${TARGET_DISK}p1"
+mkfs.ext4 -F "${TARGET_DISK}2" || mkfs.ext4 -F "${TARGET_DISK}p1"
+
+# Mount
+if [[ -b "${TARGET_DISK}1" ]]; then
+    mount "${TARGET_DISK}2" /mnt
+    mkdir -p /mnt/boot
+    mount "${TARGET_DISK}1" /mnt/boot
+else
+    mount "${TARGET_DISK}p2" /mnt
+    mkdir -p /mnt/boot
+    mount "${TARGET_DISK}p1" /mnt/boot
 fi
 
-log "Using disk: $TARGET_DISK ($(( largest_size / 1024 / 1024 / 1024 ))GB)"
-
-# Partition disk
-log "Partitioning disk..."
-wipefs -af "$TARGET_DISK"
-parted -s "$TARGET_DISK" mklabel gpt
-parted -s "$TARGET_DISK" mkpart primary fat32 1MiB 513MiB
-parted -s "$TARGET_DISK" set 1 esp on
-parted -s "$TARGET_DISK" mkpart primary ext4 513MiB 100%
-
-sleep 2
-partprobe "$TARGET_DISK"
-sleep 2
-
-# Format partitions
-boot_part="${TARGET_DISK}1"
-root_part="${TARGET_DISK}2"
-[[ $TARGET_DISK == *"nvme"* ]] && boot_part="${TARGET_DISK}p1" && root_part="${TARGET_DISK}p2"
-
-log "Formatting partitions..."
-mkfs.fat -F32 "$boot_part"
-mkfs.ext4 -F "$root_part"
-
-# Mount filesystems
-mount "$root_part" /mnt
-mkdir -p /mnt/boot
-mount "$boot_part" /mnt/boot
-
-# Install base system
+# Install
 log "Installing base system..."
-pacman -Sy
-pacstrap /mnt base base-devel linux linux-firmware grub efibootmgr networkmanager openssh sudo git
+pacman -Sy --noconfirm
+pacstrap /mnt base linux linux-firmware grub efibootmgr networkmanager openssh sudo
 
-# Generate fstab
+# Configure
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# Configure system
-log "Configuring system..."
 arch-chroot /mnt bash -c "
-set -euo pipefail
-
-# Timezone
 ln -sf /usr/share/zoneinfo/America/Halifax /etc/localtime
 hwclock --systohc
-
-# Locale
 echo 'en_US.UTF-8 UTF-8' > /etc/locale.gen
 locale-gen
 echo 'LANG=en_US.UTF-8' > /etc/locale.conf
-
-# Hostname
 echo 'lobby-kiosk' > /etc/hostname
-cat > /etc/hosts << 'EOF'
-127.0.0.1 localhost
-::1       localhost
-127.0.1.1 lobby-kiosk.localdomain lobby-kiosk
-EOF
-
-# Root password
 echo 'root:$ROOT_PASSWORD' | chpasswd
-
-# GRUB
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
-
-# Enable services
 systemctl enable NetworkManager sshd
-
-# Create lobby user
-useradd -m -s /bin/bash -G wheel lobby
+useradd -m -G wheel lobby
 echo 'lobby:$ROOT_PASSWORD' | chpasswd
-
-# Configure autologin
-mkdir -p /etc/systemd/system/getty@tty1.service.d/
-cat > /etc/systemd/system/getty@tty1.service.d/override.conf << 'EOF'
-[Service]
-ExecStart=
-ExecStart=-/usr/bin/agetty --autologin lobby --noclear %I \$TERM
-EOF
-
-# Sudo for lobby user
 echo 'lobby ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/lobby
+mkdir -p /etc/systemd/system/getty@tty1.service.d/
+echo '[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --autologin lobby --noclear %I \$TERM' > /etc/systemd/system/getty@tty1.service.d/override.conf
 "
 
-log "Base installation complete!"
-echo "1. Unmount: umount -R /mnt"
-echo "2. Reboot: reboot"
-echo "3. Remove installation media"
-echo "4. System will auto-login as 'lobby'"
-echo "5. Run post-install after boot: curl -sSL https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/post-install.sh | sudo bash"
+log "Done! Unmount with: umount -R /mnt && reboot"
