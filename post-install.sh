@@ -107,6 +107,7 @@ chown "$KIOSK_USER:$KIOSK_USER" "$KIOSK_DIR/config/version"
 log "Enabling services..."
 systemctl daemon-reload
 systemctl enable lobby-kiosk.target sshd tailscaled nginx
+systemctl start lobby-kiosk.target
 
 # Boot optimization (idempotent)
 log "Optimizing boot configuration..."
@@ -117,6 +118,17 @@ systemctl disable bluetooth cups avahi-daemon 2>/dev/null || true
 sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' /etc/default/grub
 sed -i 's/#GRUB_TIMEOUT_STYLE=menu/GRUB_TIMEOUT_STYLE=hidden/' /etc/default/grub
 grub-mkconfig -o /boot/grub/grub.cfg
+
+# Configure X11 permissions for kiosk user
+mkdir -p /etc/X11
+echo 'allowed_users=anybody' > /etc/X11/Xwrapper.config
+mv /usr/lib/Xorg.wrap /usr/lib/Xorg.wrap.disabled 2>/dev/null || true
+chmod u+s /usr/lib/Xorg
+
+# Deploy Vue application
+log "Building and deploying Vue application..."
+cd /opt/lobby
+sudo -u lobby /opt/lobby/scripts/build-app.sh
 
 # Cleanup
 rm -rf /tmp/lobby-kiosk-config

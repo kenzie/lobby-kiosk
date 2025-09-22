@@ -73,7 +73,8 @@ pacstrap /mnt \
     networkmanager openssh sudo \
     amd-ucode \
     mesa xf86-video-amdgpu \
-    inetutils
+    inetutils \
+    nodejs npm
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -118,8 +119,12 @@ ExecStart=
 ExecStart=-/usr/bin/agetty --autologin lobby --noclear %I \$TERM' > /etc/systemd/system/getty@tty1.service.d/override.conf
 "
 
+# Run post-install configuration automatically
+log "Running post-install configuration..."
+arch-chroot /mnt bash -c "curl -sSL https://raw.githubusercontent.com/kenzie/lobby-kiosk/main/post-install.sh | bash"
+
 log "Installation complete!"
 echo "1. Unmount: umount -R /mnt"
 echo "2. Reboot: reboot"
 echo "3. Remove installation media"
-echo "4. System will auto-login as 'lobby'"
+echo "4. System will auto-start kiosk display"

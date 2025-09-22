@@ -8,8 +8,8 @@ export DISPLAY=:0
 pkill -f "Xorg" || true
 sleep 2
 
-# Clean lock files
-rm -f /tmp/.X0-lock /tmp/.X11-unix/X0
+# Clean lock files (skip if permission denied)
+rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true
 
 # Start X server
 startx /opt/lobby/scripts/chromium-kiosk.sh -- :0 vt7 -quiet -nolisten tcp &

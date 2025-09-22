@@ -23,12 +23,11 @@ exec chromium \
     --disable-translate \
     --hide-scrollbars \
     --no-first-run \
-    --fast \
-    --fast-start \
     --disable-infobars \
     --disable-session-crashed-bubble \
     --autoplay-policy=no-user-gesture-required \
     --kiosk \
-    --window-position=0,0 \
     --start-fullscreen \
+    --window-size=3840,2160 \
+    --force-device-scale-factor=1 \
     http://localhost:8080
