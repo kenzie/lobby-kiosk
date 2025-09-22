@@ -16,7 +16,7 @@ exec chromium \
     --no-sandbox \
     --disable-dev-shm-usage \
     --disable-gpu \
-    --disable-features=TranslateUI \
+    --disable-features=TranslateUI,VizDisplayCompositor \
     --disable-extensions \
     --disable-plugins \
     --disable-sync \
@@ -28,14 +28,28 @@ exec chromium \
     --disable-client-side-phishing-detection \
     --disable-component-extensions-with-background-pages \
     --disable-default-apps \
-    --disable-features=VizDisplayCompositor \
     --disable-hang-monitor \
     --disable-ipc-flooding-protection \
     --disable-popup-blocking \
     --disable-prompt-on-repost \
     --disable-renderer-backgrounding \
-    --disable-sync \
     --disable-web-security \
+    --disable-dbus \
+    --disable-d3d11 \
+    --disable-gl-drawing-for-tests \
+    --disable-gpu-sandbox \
+    --disable-software-rasterizer \
+    --disable-background-mode \
+    --disable-component-update \
+    --disable-domain-reliability \
+    --disable-features=MediaRouter \
+    --disable-ipc-flooding-protection \
+    --disable-notifications \
+    --disable-permissions-api \
+    --disable-speech-api \
+    --disable-web-resources \
+    --no-service-autorun \
+    --no-wifi \
     --metrics-recording-only \
     --no-crash-upload \
     --no-default-browser-check \
