@@ -21,8 +21,8 @@ sleep 2
 # Clean lock files (skip if permission denied)
 rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true
 
-# Start X server
-startx /opt/lobby/scripts/chromium-kiosk.sh -- :0 vt7 -quiet -nolisten tcp &
+# Start X server (suppress xkbcomp warnings only)
+startx /opt/lobby/scripts/chromium-kiosk.sh -- :0 vt7 -quiet -nolisten tcp 2> >(grep -v "Could not resolve keysym XF86" >&2) &
 X_PID=$!
 
 # Wait for X to start
@@ -40,10 +40,6 @@ xset -display :0 s off
 xset -display :0 -dpms
 xset -display :0 s noblank
 
-# Apply custom XKB configuration if available
-if [[ -f "/usr/share/X11/xkb/symbols/lobby/kiosk" ]]; then
-    setxkbmap -display :0 -symbols "lobby/kiosk(basic)" 2>/dev/null || true
-fi
 
 # Hide cursor
 unclutter -display :0 -idle 1 -root &
