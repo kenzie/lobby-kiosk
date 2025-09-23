@@ -1,0 +1,21 @@
+// Custom keyboard configuration for lobby kiosk
+// Defines missing keysyms to prevent xkbcomp warnings
+
+default partial alphanumeric_keys modifier_keys
+xkb_symbols "basic" {
+
+    name[Group1]="Lobby Kiosk";
+
+    // Include standard US layout
+    include "us(basic)"
+    
+    // Define missing keysyms that cause warnings
+    key <I248> { [ XF86RefreshRateToggle ] };
+    key <I249> { [ XF86Accessibility ] };
+    key <I250> { [ XF86DoNotDisturb ] };
+    
+    // Make these keys do nothing (NoSymbol)
+    replace key <I248> { [ NoSymbol ] };
+    replace key <I249> { [ NoSymbol ] };
+    replace key <I250> { [ NoSymbol ] };
+};

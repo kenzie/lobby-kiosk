@@ -1,0 +1,7 @@
+// Custom XKB rules for lobby kiosk
+
+! model		=	symbols
+  *		=	kiosk(basic)
+
+! option		=	symbols
+  terminate:ctrl_alt_bksp	=	+terminate(ctrl_alt_bksp)

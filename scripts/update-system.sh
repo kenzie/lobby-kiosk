@@ -45,6 +45,13 @@ cp configs/systemd/*.service /etc/systemd/system/
 cp configs/systemd/*.target /etc/systemd/system/
 systemctl daemon-reload
 
+# Update XKB configuration
+log "Updating XKB configuration..."
+mkdir -p /usr/share/X11/xkb/symbols/lobby
+mkdir -p /usr/share/X11/xkb/rules/lobby
+cp configs/xkb/symbols/* /usr/share/X11/xkb/symbols/lobby/ 2>/dev/null || true
+cp configs/xkb/rules/* /usr/share/X11/xkb/rules/lobby/ 2>/dev/null || true
+
 # Install serve package if not present
 if ! command -v serve &> /dev/null; then
     log "Installing serve package..."

@@ -40,6 +40,11 @@ xset -display :0 s off
 xset -display :0 -dpms
 xset -display :0 s noblank
 
+# Apply custom XKB configuration if available
+if [[ -f "/usr/share/X11/xkb/symbols/lobby/kiosk" ]]; then
+    setxkbmap -display :0 -symbols "lobby/kiosk(basic)" 2>/dev/null || true
+fi
+
 # Hide cursor
 unclutter -display :0 -idle 1 -root &
 
