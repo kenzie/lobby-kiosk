@@ -22,6 +22,7 @@ show_help() {
     echo "Commands:"
     echo "  status      Show system status"
     echo "  logs        Show recent logs"
+    echo "  review      Analyze logs since boot for issues"
     echo "  restart     Restart services (requires sudo)"
     echo "  update      Update application"
     echo "  upgrade        Upgrade kiosk system (requires sudo)"
@@ -92,6 +93,90 @@ cmd_logs() {
     echo -e "${BLUE}=== Recent Logs ===${NC}"
     echo
     journalctl -u lobby-kiosk.target -n 20 --no-pager
+}
+
+cmd_review() {
+    local boot_time=$(systemctl show --property=ActiveEnterTimestamp --value)
+    local since_boot="--since=\"$boot_time\""
+    
+    echo -e "${BLUE}=== System Review Since Boot ===${NC}"
+    echo "Boot time: $boot_time"
+    echo
+    
+    # Check for failed services
+    echo -e "${BLUE}Failed Services:${NC}"
+    local failed=$(systemctl list-units --state=failed --no-legend --no-pager | grep -E "lobby-|display|watchdog" || echo "None")
+    if [[ "$failed" == "None" ]]; then
+        echo -e "${GREEN}✓ No failed services${NC}"
+    else
+        echo -e "${RED}✗ Found failed services:${NC}"
+        echo "$failed"
+    fi
+    echo
+    
+    # Check watchdog health failures
+    echo -e "${BLUE}Watchdog Health Issues:${NC}"
+    local health_failures=$(journalctl --since="$boot_time" -u lobby-watchdog.service --no-pager -q | grep -c "Health check failed" || echo "0")
+    local health_restorations=$(journalctl --since="$boot_time" -u lobby-watchdog.service --no-pager -q | grep -c "Health restored" || echo "0")
+    
+    if [[ $health_failures -eq 0 ]]; then
+        echo -e "${GREEN}✓ No health check failures${NC}"
+    else
+        echo -e "${YELLOW}⚠ $health_failures health check failures${NC}"
+        echo -e "${GREEN}✓ $health_restorations recoveries${NC}"
+        if [[ $health_failures -gt 5 ]]; then
+            echo -e "${RED}  → Consider investigating frequent failures${NC}"
+        fi
+    fi
+    echo
+    
+    # Check for error patterns
+    echo -e "${BLUE}Error Analysis:${NC}"
+    local errors=0
+    
+    # Check for X11 issues (excluding harmless warnings)
+    local x11_errors=$(journalctl --since="$boot_time" -u lobby-display.service --no-pager -q | grep -i "error" | grep -v "not fatal" | grep -v "xkbcomp" | wc -l)
+    if [[ $x11_errors -gt 0 ]]; then
+        echo -e "${YELLOW}⚠ $x11_errors X11 errors found${NC}"
+        errors=$((errors + 1))
+    fi
+    
+    # Check for service crashes
+    local crashes=$(journalctl --since="$boot_time" --no-pager -q | grep -E "(segfault|killed|core dump)" | grep -E "lobby-|chromium" | wc -l)
+    if [[ $crashes -gt 0 ]]; then
+        echo -e "${RED}✗ $crashes service crashes found${NC}"
+        errors=$((errors + 1))
+    fi
+    
+    # Check for memory issues
+    local oom=$(journalctl --since="$boot_time" --no-pager -q | grep -i "out of memory\|oom" | grep -E "lobby-|chromium" | wc -l)
+    if [[ $oom -gt 0 ]]; then
+        echo -e "${RED}✗ $oom out-of-memory events${NC}"
+        errors=$((errors + 1))
+    fi
+    
+    if [[ $errors -eq 0 ]]; then
+        echo -e "${GREEN}✓ No significant errors detected${NC}"
+    fi
+    echo
+    
+    # System uptime and performance
+    echo -e "${BLUE}Performance Summary:${NC}"
+    echo "Uptime: $(uptime -p)"
+    echo "Memory: $(free -h | grep Mem | awk '{print $3 "/" $2}')"
+    local load=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | tr -d ',')
+    echo "Load: $load"
+    
+    # Overall assessment
+    echo
+    echo -e "${BLUE}Overall Assessment:${NC}"
+    if [[ $errors -eq 0 && $health_failures -lt 3 && "$failed" == "None" ]]; then
+        echo -e "${GREEN}✓ System running well since boot${NC}"
+    elif [[ $errors -lt 2 && $health_failures -lt 5 ]]; then
+        echo -e "${YELLOW}⚠ Minor issues detected, system stable${NC}"
+    else
+        echo -e "${RED}✗ Multiple issues detected, review recommended${NC}"
+    fi
 }
 
 cmd_restart() {
@@ -216,6 +301,7 @@ main() {
     case "$command" in
         "status") cmd_status ;;
         "logs") cmd_logs ;;
+        "review") cmd_review ;;
         "restart") check_sudo "$command"; cmd_restart ;;
         "update") cmd_update ;;
         "upgrade"|"update-system") check_sudo "$command"; cmd_update_system ;;
