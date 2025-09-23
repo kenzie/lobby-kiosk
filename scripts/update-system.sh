@@ -69,6 +69,12 @@ log "Updating version..."
 echo "1.1.2" > "$KIOSK_DIR/config/version"
 chown lobby:lobby "$KIOSK_DIR/config/version" || sudo chown lobby:lobby "$KIOSK_DIR/config/version"
 
+# Create external data cache directory
+log "Setting up external data cache..."
+mkdir -p "$KIOSK_DIR/cache"
+chown lobby:lobby "$KIOSK_DIR/cache"
+chmod 755 "$KIOSK_DIR/cache"
+
 # Restart services
 log "Restarting services..."
 systemctl restart lobby-app.service

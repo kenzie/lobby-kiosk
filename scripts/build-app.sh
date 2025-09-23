@@ -36,6 +36,13 @@ npm ci --production=false
 echo "Building Vue.js application..."
 npm run build
 
+# Create external data cache symlink
+echo "Setting up external data cache..."
+mkdir -p /opt/lobby/cache
+ln -sf /opt/lobby/cache dist/data
+chown -h lobby:lobby dist/data
+echo "Data cache symlink created: dist/data -> /opt/lobby/cache"
+
 # Verify build
 if [[ ! -f "dist/index.html" ]]; then
     echo "Build failed: no index.html found"
