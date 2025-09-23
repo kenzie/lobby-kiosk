@@ -67,8 +67,28 @@ exec chromium \
     --disable-infobars \
     --disable-session-crashed-bubble \
     --autoplay-policy=no-user-gesture-required \
+    --disable-logging \
+    --disable-login-animations \
+    --disable-modal-animations \
+    --wm-window-animations-disabled \
+    --disable-office-editing-component-app \
+    --disable-dinosaur-easter-egg \
+    --disable-file-system \
+    --disable-geolocation \
+    --disable-ipc-flooding-protection \
+    --disable-renderer-accessibility \
+    --disable-threaded-animation \
+    --disable-threaded-scrolling \
+    --disable-in-process-stack-traces \
+    --disable-histogram-customizer \
+    --disable-gaia-services \
+    --disable-search-engine-choice-screen \
+    --disable-ipc-logging \
+    --log-level=3 \
+    --silent-debugger-extension-api \
+    --disable-chrome-tracing \
     --kiosk \
     --start-fullscreen \
     --window-size=3840,2160 \
     --force-device-scale-factor=1 \
-    "$URL"
+    "$URL" 2>/dev/null

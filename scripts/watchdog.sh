@@ -11,13 +11,26 @@ log() {
 }
 
 check_app_health() {
-    # Simple health check - if we get any response from the health endpoint, it's healthy
-    curl -f -s --max-time 10 "$HEALTH_URL" >/dev/null 2>&1
+    # Retry health check up to 3 times to handle brief network hiccups
+    for i in {1..3}; do
+        if curl -f -s --max-time 5 "$HEALTH_URL" >/dev/null 2>&1; then
+            return 0
+        fi
+        [[ $i -lt 3 ]] && sleep 2
+    done
+    return 1
 }
 
 check_display_health() {
     export DISPLAY=:0
-    xset q >/dev/null 2>&1 && pgrep -f chromium >/dev/null
+    # Check both X server and chromium process with retry
+    for i in {1..2}; do
+        if xset q >/dev/null 2>&1 && pgrep -f chromium >/dev/null 2>&1; then
+            return 0
+        fi
+        [[ $i -lt 2 ]] && sleep 1
+    done
+    return 1
 }
 
 escalate_recovery() {
