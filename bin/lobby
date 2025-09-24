@@ -170,7 +170,7 @@ cmd_review() {
     # Overall assessment
     echo
     echo -e "${BLUE}Overall Assessment:${NC}"
-    if [[ $errors -eq 0 && $health_failures -lt 3 && "$failed" == "None" ]]; then
+    if [[ $errors -eq 0 && $health_failures -lt 3 && -z "$failed" ]]; then
         echo -e "${GREEN}✓ System running well since boot${NC}"
     elif [[ $errors -lt 2 && $health_failures -lt 5 ]]; then
         echo -e "${YELLOW}⚠ Minor issues detected, system stable${NC}"
