@@ -96,8 +96,8 @@ cmd_logs() {
 }
 
 cmd_review() {
-    local boot_time=$(systemctl show --property=ActiveEnterTimestamp --value)
-    local since_boot="--since=\"$boot_time\""
+    # Get boot time using uptime and current time
+    local boot_time=$(date -d "$(uptime -s)" "+%Y-%m-%d %H:%M:%S")
     
     echo -e "${BLUE}=== System Review Since Boot ===${NC}"
     echo "Boot time: $boot_time"
@@ -105,8 +105,8 @@ cmd_review() {
     
     # Check for failed services
     echo -e "${BLUE}Failed Services:${NC}"
-    local failed=$(systemctl list-units --state=failed --no-legend --no-pager | grep -E "lobby-|display|watchdog" || echo "None")
-    if [[ "$failed" == "None" ]]; then
+    local failed=$(systemctl list-units --state=failed --no-legend --no-pager | grep -E "lobby-|display|watchdog")
+    if [[ -z "$failed" ]]; then
         echo -e "${GREEN}✓ No failed services${NC}"
     else
         echo -e "${RED}✗ Found failed services:${NC}"
@@ -116,8 +116,8 @@ cmd_review() {
     
     # Check watchdog health failures
     echo -e "${BLUE}Watchdog Health Issues:${NC}"
-    local health_failures=$(journalctl --since="$boot_time" -u lobby-watchdog.service --no-pager -q | grep -c "Health check failed" || echo "0")
-    local health_restorations=$(journalctl --since="$boot_time" -u lobby-watchdog.service --no-pager -q | grep -c "Health restored" || echo "0")
+    local health_failures=$(journalctl --since="$boot_time" -u lobby-watchdog.service --no-pager -q | grep -c "Health check failed" | tr -d '\n')
+    local health_restorations=$(journalctl --since="$boot_time" -u lobby-watchdog.service --no-pager -q | grep -c "Health restored" | tr -d '\n')
     
     if [[ $health_failures -eq 0 ]]; then
         echo -e "${GREEN}✓ No health check failures${NC}"
@@ -135,21 +135,21 @@ cmd_review() {
     local errors=0
     
     # Check for X11 issues (excluding harmless warnings)
-    local x11_errors=$(journalctl --since="$boot_time" -u lobby-display.service --no-pager -q | grep -i "error" | grep -v "not fatal" | grep -v "xkbcomp" | wc -l)
+    local x11_errors=$(journalctl --since="$boot_time" -u lobby-display.service --no-pager -q | grep -i "error" | grep -v "not fatal" | grep -v "xkbcomp" | wc -l | tr -d '\n')
     if [[ $x11_errors -gt 0 ]]; then
         echo -e "${YELLOW}⚠ $x11_errors X11 errors found${NC}"
         errors=$((errors + 1))
     fi
     
     # Check for service crashes
-    local crashes=$(journalctl --since="$boot_time" --no-pager -q | grep -E "(segfault|killed|core dump)" | grep -E "lobby-|chromium" | wc -l)
+    local crashes=$(journalctl --since="$boot_time" --no-pager -q | grep -E "(segfault|killed|core dump)" | grep -E "lobby-|chromium" | wc -l | tr -d '\n')
     if [[ $crashes -gt 0 ]]; then
         echo -e "${RED}✗ $crashes service crashes found${NC}"
         errors=$((errors + 1))
     fi
     
     # Check for memory issues
-    local oom=$(journalctl --since="$boot_time" --no-pager -q | grep -i "out of memory\|oom" | grep -E "lobby-|chromium" | wc -l)
+    local oom=$(journalctl --since="$boot_time" --no-pager -q | grep -i "out of memory\|oom" | grep -E "lobby-|chromium" | wc -l | tr -d '\n')
     if [[ $oom -gt 0 ]]; then
         echo -e "${RED}✗ $oom out-of-memory events${NC}"
         errors=$((errors + 1))
