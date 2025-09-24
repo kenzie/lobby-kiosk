@@ -23,6 +23,7 @@ show_help() {
     echo "  status      Show system status"
     echo "  logs        Show recent logs"
     echo "  review      Analyze logs since boot for issues"
+    echo "  memory      Check memory usage and potential leaks"
     echo "  restart     Restart services (requires sudo)"
     echo "  update      Update application"
     echo "  upgrade        Upgrade kiosk system (requires sudo)"
@@ -173,6 +174,28 @@ cmd_review() {
     echo "Memory: $(free -h | grep Mem | awk '{print $3 "/" $2}')"
     local load=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | tr -d ',')
     echo "Load: $load"
+    echo
+    
+    # Memory usage analysis
+    echo -e "${BLUE}Memory Usage Analysis:${NC}"
+    local mem_usage=$(free | grep Mem | awk '{printf "%.1f", $3/$2 * 100.0}')
+    if (( $(echo "$mem_usage > 80" | bc -l) )); then
+        echo -e "${RED}⚠ High memory usage: ${mem_usage}%${NC}"
+    elif (( $(echo "$mem_usage > 60" | bc -l) )); then
+        echo -e "${YELLOW}⚠ Elevated memory usage: ${mem_usage}%${NC}"
+    else
+        echo -e "${GREEN}✓ Normal memory usage: ${mem_usage}%${NC}"
+    fi
+    
+    # Check for memory consumption by lobby services
+    echo "Service memory usage:"
+    for service in lobby-app.service lobby-display.service lobby-watchdog.service; do
+        local mem_info=$(systemctl status "$service" 2>/dev/null | grep "memory peak" | tail -1 || echo "")
+        if [[ -n "$mem_info" ]]; then
+            local peak_mem=$(echo "$mem_info" | awk '{print $NF}')
+            echo "  $service: Peak $peak_mem since last restart"
+        fi
+    done
     
     # Overall assessment
     echo
@@ -183,6 +206,76 @@ cmd_review() {
         echo -e "${YELLOW}⚠ Minor issues detected, system stable${NC}"
     else
         echo -e "${RED}✗ Multiple issues detected, review recommended${NC}"
+    fi
+}
+
+cmd_memory() {
+    echo -e "${BLUE}=== Memory Analysis ===${NC}"
+    echo
+    
+    # Overall system memory
+    echo -e "${BLUE}System Memory:${NC}"
+    free -h
+    local mem_usage=$(free | grep Mem | awk '{printf "%.1f", $3/$2 * 100.0}')
+    echo "Usage: ${mem_usage}%"
+    echo
+    
+    # Top memory consumers
+    echo -e "${BLUE}Top Memory Consumers:${NC}"
+    ps aux --sort=-%mem | head -10 | awk '{printf "%-12s %6s %6s %s\n", $1, $4"%", $6/1024"MB", $11}' | column -t
+    echo
+    
+    # Lobby service memory details
+    echo -e "${BLUE}Lobby Service Memory:${NC}"
+    for service in lobby-app.service lobby-display.service lobby-watchdog.service; do
+        if systemctl is-active "$service" >/dev/null 2>&1; then
+            local status_info=$(systemctl status "$service" 2>/dev/null)
+            local current_mem=$(echo "$status_info" | grep "Memory:" | awk '{print $2}')
+            local peak_mem=$(echo "$status_info" | grep "memory peak" | tail -1 | awk '{print $NF}')
+            local runtime=$(echo "$status_info" | grep "Active:" | awk '{print $3, $4}')
+            
+            echo "$service:"
+            echo "  Current: ${current_mem:-N/A}"
+            echo "  Peak: ${peak_mem:-N/A}"
+            echo "  Runtime: ${runtime:-N/A}"
+        else
+            echo "$service: inactive"
+        fi
+    done
+    echo
+    
+    # Memory leak indicators
+    echo -e "${BLUE}Memory Leak Indicators:${NC}"
+    
+    # Check for growing memory usage over time
+    local chromium_procs=$(pgrep -f chromium | wc -l | tr -d '\n')
+    if [[ $chromium_procs -gt 5 ]]; then
+        echo -e "${YELLOW}⚠ Multiple Chromium processes: $chromium_procs${NC}"
+        echo "  This could indicate process spawning issues"
+    else
+        echo -e "${GREEN}✓ Normal Chromium process count: $chromium_procs${NC}"
+    fi
+    
+    # Check swap usage
+    local swap_usage=$(free | grep Swap | awk '{if($2>0) printf "%.1f", $3/$2 * 100.0; else print "0"}')
+    if (( $(echo "$swap_usage > 10" | bc -l 2>/dev/null || echo 0) )); then
+        echo -e "${YELLOW}⚠ Swap usage: ${swap_usage}%${NC}"
+        echo "  High swap usage may indicate memory pressure"
+    else
+        echo -e "${GREEN}✓ Minimal swap usage: ${swap_usage}%${NC}"
+    fi
+    
+    # Memory recommendations
+    echo
+    echo -e "${BLUE}Recommendations:${NC}"
+    if (( $(echo "$mem_usage > 80" | bc -l) )); then
+        echo -e "${RED}• Memory usage is high - consider restarting services${NC}"
+        echo -e "${RED}• Monitor for continued growth over time${NC}"
+    elif (( $(echo "$mem_usage > 60" | bc -l) )); then
+        echo -e "${YELLOW}• Monitor memory usage trends${NC}"
+        echo -e "${YELLOW}• Consider restarting if usage continues to climb${NC}"
+    else
+        echo -e "${GREEN}• Memory usage looks healthy${NC}"
     fi
 }
 
@@ -309,6 +402,7 @@ main() {
         "status") cmd_status ;;
         "logs") cmd_logs ;;
         "review") cmd_review ;;
+        "memory") cmd_memory ;;
         "restart") check_sudo "$command"; cmd_restart ;;
         "update") cmd_update ;;
         "upgrade"|"update-system") check_sudo "$command"; cmd_update_system ;;
