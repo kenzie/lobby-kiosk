@@ -90,9 +90,16 @@ cmd_status() {
 }
 
 cmd_logs() {
-    echo -e "${BLUE}=== Recent Logs ===${NC}"
+    echo -e "${BLUE}=== Recent Lobby Logs ===${NC}"
     echo
-    journalctl -u lobby-kiosk.target -n 20 --no-pager
+    echo -e "${BLUE}Watchdog (last 10):${NC}"
+    journalctl -u lobby-watchdog.service -n 10 --no-pager -o short
+    echo
+    echo -e "${BLUE}Display Service (last 10):${NC}"
+    journalctl -u lobby-display.service -n 10 --no-pager -o short  
+    echo
+    echo -e "${BLUE}App Service (last 10):${NC}"
+    journalctl -u lobby-app.service -n 10 --no-pager -o short
 }
 
 cmd_review() {
