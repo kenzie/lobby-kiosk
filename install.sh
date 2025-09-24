@@ -27,6 +27,10 @@ if [[ -z "${ROOT_PASSWORD:-}" ]]; then
     echo
 fi
 
+# Get Tailscale auth key
+echo -n "Enter Tailscale auth key (or press Enter to skip): "
+read TAILSCALE_AUTH_KEY
+
 log "Lobby Kiosk Installer for Lenovo M75q-1"
 log "Target disk: $TARGET_DISK"
 
@@ -85,6 +89,7 @@ mount "${TARGET_DISK}p1" /mnt/boot
 # Install base system optimized for Lenovo M75q-1 (AMD Ryzen)
 log "Installing base system for Lenovo M75q-1..."
 pacman -Sy --noconfirm
+
 pacstrap /mnt \
     base linux linux-firmware \
     grub efibootmgr \
@@ -124,6 +129,16 @@ grub-mkconfig -o /boot/grub/grub.cfg
 
 # Enable services
 systemctl enable NetworkManager sshd
+
+# Install and configure Tailscale if auth key provided
+if [[ -n \$TAILSCALE_AUTH_KEY ]]; then
+    # Install Tailscale using official script
+    curl -fsSL https://tailscale.com/install.sh | sh
+    systemctl enable tailscaled
+    
+    # Connect with auth key
+    tailscale up --auth-key=\$TAILSCALE_AUTH_KEY --ssh --accept-routes
+fi
 
 # Create lobby user
 useradd -m -G wheel lobby
