@@ -178,10 +178,10 @@ cmd_review() {
     
     # Memory usage analysis
     echo -e "${BLUE}Memory Usage Analysis:${NC}"
-    local mem_usage=$(free | grep Mem | awk '{printf "%.1f", $3/$2 * 100.0}')
-    if (( $(echo "$mem_usage > 80" | bc -l) )); then
+    local mem_usage=$(free | grep Mem | awk '{printf "%.0f", $3/$2 * 100.0}')
+    if [[ $mem_usage -gt 80 ]]; then
         echo -e "${RED}⚠ High memory usage: ${mem_usage}%${NC}"
-    elif (( $(echo "$mem_usage > 60" | bc -l) )); then
+    elif [[ $mem_usage -gt 60 ]]; then
         echo -e "${YELLOW}⚠ Elevated memory usage: ${mem_usage}%${NC}"
     else
         echo -e "${GREEN}✓ Normal memory usage: ${mem_usage}%${NC}"
@@ -257,8 +257,8 @@ cmd_memory() {
     fi
     
     # Check swap usage
-    local swap_usage=$(free | grep Swap | awk '{if($2>0) printf "%.1f", $3/$2 * 100.0; else print "0"}')
-    if (( $(echo "$swap_usage > 10" | bc -l 2>/dev/null || echo 0) )); then
+    local swap_usage=$(free | grep Swap | awk '{if($2>0) printf "%.0f", $3/$2 * 100.0; else print "0"}')
+    if [[ $swap_usage -gt 10 ]]; then
         echo -e "${YELLOW}⚠ Swap usage: ${swap_usage}%${NC}"
         echo "  High swap usage may indicate memory pressure"
     else
@@ -268,10 +268,10 @@ cmd_memory() {
     # Memory recommendations
     echo
     echo -e "${BLUE}Recommendations:${NC}"
-    if (( $(echo "$mem_usage > 80" | bc -l) )); then
+    if [[ $mem_usage -gt 80 ]]; then
         echo -e "${RED}• Memory usage is high - consider restarting services${NC}"
         echo -e "${RED}• Monitor for continued growth over time${NC}"
-    elif (( $(echo "$mem_usage > 60" | bc -l) )); then
+    elif [[ $mem_usage -gt 60 ]]; then
         echo -e "${YELLOW}• Monitor memory usage trends${NC}"
         echo -e "${YELLOW}• Consider restarting if usage continues to climb${NC}"
     else
