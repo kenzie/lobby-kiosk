@@ -190,10 +190,21 @@ cmd_review() {
     # Check for memory consumption by lobby services
     echo "Service memory usage:"
     for service in lobby-app.service lobby-display.service lobby-watchdog.service; do
-        local mem_info=$(systemctl status "$service" 2>/dev/null | grep "memory peak" | tail -1 || echo "")
-        if [[ -n "$mem_info" ]]; then
-            local peak_mem=$(echo "$mem_info" | awk '{print $NF}')
-            echo "  $service: Peak $peak_mem since last restart"
+        if systemctl is-active "$service" >/dev/null 2>&1; then
+            local status_info=$(systemctl status "$service" 2>/dev/null)
+            local current_mem=$(echo "$status_info" | grep "Memory:" | awk '{print $2}' | head -1)
+            local peak_mem=$(echo "$status_info" | grep "memory peak" | awk '{print $NF}' | head -1)
+            
+            if [[ -n "$current_mem" || -n "$peak_mem" ]]; then
+                echo -n "  $service: "
+                [[ -n "$current_mem" ]] && echo -n "Current: $current_mem "
+                [[ -n "$peak_mem" ]] && echo -n "Peak: $peak_mem"
+                echo
+            else
+                echo "  $service: Memory info not available"
+            fi
+        else
+            echo "  $service: Inactive"
         fi
     done
     
