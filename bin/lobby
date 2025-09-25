@@ -227,7 +227,7 @@ cmd_memory() {
     # Overall system memory
     echo -e "${BLUE}System Memory:${NC}"
     free -h
-    local mem_usage=$(free | grep Mem | awk '{printf "%.1f", $3/$2 * 100.0}')
+    local mem_usage=$(free | grep Mem | awk '{printf "%.0f", $3/$2 * 100.0}')
     echo "Usage: ${mem_usage}%"
     echo
     
