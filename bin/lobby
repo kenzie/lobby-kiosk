@@ -242,8 +242,8 @@ cmd_memory() {
         if systemctl is-active "$service" >/dev/null 2>&1; then
             local status_info=$(systemctl status "$service" 2>/dev/null)
             local current_mem=$(echo "$status_info" | grep "Memory:" | awk '{print $2}')
-            local peak_mem=$(echo "$status_info" | grep "memory peak" | tail -1 | awk '{print $NF}')
-            local runtime=$(echo "$status_info" | grep "Active:" | awk '{print $3, $4}')
+            local peak_mem=$(echo "$status_info" | grep "Memory:" | sed -n 's/.*peak: \([^)]*\).*/\1/p')
+            local runtime=$(echo "$status_info" | grep "Active:" | awk '{for(i=4; i<=NF; i++) printf "%s ", $i; print ""}')
             
             echo "$service:"
             echo "  Current: ${current_mem:-N/A}"
@@ -258,11 +258,14 @@ cmd_memory() {
     # Memory leak indicators
     echo -e "${BLUE}Memory Leak Indicators:${NC}"
     
-    # Check for growing memory usage over time
+    # Check for excessive Chromium processes (normal is 10-20 for kiosk mode)
     local chromium_procs=$(pgrep -f chromium | wc -l | tr -d '\n')
-    if [[ $chromium_procs -gt 5 ]]; then
-        echo -e "${YELLOW}⚠ Multiple Chromium processes: $chromium_procs${NC}"
-        echo "  This could indicate process spawning issues"
+    if [[ $chromium_procs -gt 35 ]]; then
+        echo -e "${RED}⚠ Excessive Chromium processes: $chromium_procs${NC}"
+        echo "  This may indicate process spawning issues or crashes"
+    elif [[ $chromium_procs -gt 25 ]]; then
+        echo -e "${YELLOW}⚠ High Chromium process count: $chromium_procs${NC}"
+        echo "  Monitor for continued growth"
     else
         echo -e "${GREEN}✓ Normal Chromium process count: $chromium_procs${NC}"
     fi
