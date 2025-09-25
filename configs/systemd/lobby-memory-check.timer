@@ -1,0 +1,11 @@
+[Unit]
+Description=Run nightly memory check during maintenance window
+Requires=lobby-memory-check.service
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=1800
+Persistent=true
+
+[Install]
+WantedBy=timers.target

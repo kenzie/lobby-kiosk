@@ -1,0 +1,14 @@
+[Unit]
+Description=Nightly Memory Check and Restart
+After=lobby-kiosk.target
+Requisite=lobby-kiosk.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/lobby/scripts/memory-check.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
