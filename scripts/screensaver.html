@@ -18,6 +18,9 @@
                 overflow: hidden;
                 width: 100vw;
                 height: 100vh;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                text-rendering: optimizeLegibility;
             }
 
             .screensaver {
@@ -32,7 +35,9 @@
                 display: flex;
                 align-items: center;
                 gap: 20px;
-                transition: left 2s ease-in-out;
+                transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1);
+                will-change: transform;
+                transform: translateX(0);
             }
 
             .current-date,
@@ -41,6 +46,8 @@
                 font-weight: bold;
                 color: #fff;
                 text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+                will-change: contents;
+                transform: translateZ(0);
             }
 
             .route19-logo {
@@ -65,7 +72,8 @@
                 flex-direction: column;
                 align-items: center;
                 gap: 40px;
-                transition: left 2s ease-in-out;
+                transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1);
+                will-change: transform;
             }
 
             .islanders-logo {
@@ -81,6 +89,8 @@
                 color: #fff;
                 text-align: center;
                 line-height: 1.2;
+                will-change: transform;
+                transform: translateZ(0);
             }
 
             .return-message {
@@ -89,6 +99,8 @@
                 color: #fff;
                 text-align: center;
                 text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+                will-change: contents;
+                transform: translateZ(0);
             }
 
             @media (max-width: 1920px) {
@@ -176,23 +188,24 @@
                 const centerMessageRandomOffset =
                     (Math.random() - 0.5) * maxRandomOffset;
 
-                // Apply positions
-                statusBar.style.left =
-                    Math.max(
-                        0,
-                        Math.min(
-                            screenWidth - statusBarWidth,
-                            statusBarBaseX + statusBarRandomOffset,
-                        ),
-                    ) + "px";
-                centerMessage.style.left =
-                    Math.max(
-                        0,
-                        Math.min(
-                            screenWidth - centerMessageWidth,
-                            centerMessageBaseX + centerMessageRandomOffset,
-                        ),
-                    ) + "px";
+                // Apply positions using transform for better performance
+                const statusBarX = Math.max(
+                    0,
+                    Math.min(
+                        screenWidth - statusBarWidth,
+                        statusBarBaseX + statusBarRandomOffset,
+                    ),
+                );
+                const centerMessageX = Math.max(
+                    0,
+                    Math.min(
+                        screenWidth - centerMessageWidth,
+                        centerMessageBaseX + centerMessageRandomOffset,
+                    ),
+                );
+
+                statusBar.style.transform = `translateX(${statusBarX}px)`;
+                centerMessage.style.transform = `translateY(-50%) translateX(${centerMessageX}px)`;
             }
 
             function updateAnimation() {
