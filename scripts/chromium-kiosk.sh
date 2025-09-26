@@ -24,9 +24,7 @@ fi
 exec chromium \
     --no-sandbox \
     --disable-dev-shm-usage \
-    --enable-gpu \
-    --enable-gpu-rasterization \
-    --enable-zero-copy \
+    --disable-gpu \
     --disable-features=TranslateUI,VizDisplayCompositor,MediaRouter \
     --disable-extensions \
     --disable-plugins \
@@ -69,9 +67,6 @@ exec chromium \
     --disable-infobars \
     --disable-session-crashed-bubble \
     --autoplay-policy=no-user-gesture-required \
-    --enable-accelerated-video-decode \
-    --enable-accelerated-mjpeg-decode \
-    --enable-hardware-overlays \
     --disable-logging \
     --disable-login-animations \
     --disable-modal-animations \
@@ -82,8 +77,8 @@ exec chromium \
     --disable-geolocation \
     --disable-ipc-flooding-protection \
     --disable-renderer-accessibility \
-    --enable-threaded-animation \
-    --enable-threaded-scrolling \
+    --disable-threaded-animation \
+    --disable-threaded-scrolling \
     --disable-in-process-stack-traces \
     --disable-histogram-customizer \
     --disable-gaia-services \
