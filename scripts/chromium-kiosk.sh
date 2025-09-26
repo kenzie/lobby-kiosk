@@ -24,7 +24,7 @@ fi
 exec chromium \
     --no-sandbox \
     --disable-dev-shm-usage \
-    --disable-gpu \
+    --enable-gpu \
     --disable-features=TranslateUI,VizDisplayCompositor,MediaRouter \
     --disable-extensions \
     --disable-plugins \
@@ -77,8 +77,8 @@ exec chromium \
     --disable-geolocation \
     --disable-ipc-flooding-protection \
     --disable-renderer-accessibility \
-    --disable-threaded-animation \
-    --disable-threaded-scrolling \
+    --enable-threaded-animation \
+    --enable-threaded-scrolling \
     --disable-in-process-stack-traces \
     --disable-histogram-customizer \
     --disable-gaia-services \
