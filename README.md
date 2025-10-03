@@ -1,5 +1,7 @@
 # Lobby Kiosk System
 
+PROOF OF CONCEPT, SUPERCEDED BY KIOSKBOOK [https://github.com/kenzie/kioskbook]
+
 Automated kiosk display system for Lenovo M75q-1 with enhanced reliability features.
 
 ## Features
